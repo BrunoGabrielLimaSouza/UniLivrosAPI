@@ -43,13 +43,13 @@ public class TrocaService {
         Agendamento agendamento = agendamentoRepository.findById(trocaDTO.getAgendamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", trocaDTO.getAgendamentoId()));
         
-        // Verificar se agendamento está realizado
-        if (agendamento.getStatus() != Agendamento.StatusAgendamento.REALIZADO) {
-            throw new BusinessException("Apenas agendamentos realizados podem ter troca");
+        // Verificar se agendamento está confirmado
+        if (agendamento.getStatus() != Agendamento.StatusAgendamento.CONFIRMADO) {
+            throw new BusinessException("Apenas agendamentos confirmados podem ter troca");
         }
         
         // Verificar se já existe troca para este agendamento
-        if (agendamento.getProposta().getAgendamento() != null) {
+        if (trocaRepository.existsByAgendamento(agendamento)) {
             throw new BusinessException("Já existe troca para este agendamento");
         }
         

@@ -1,5 +1,6 @@
 package com.unilivros.repository;
 
+import com.unilivros.model.Agendamento;
 import com.unilivros.model.Troca;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,11 +15,13 @@ public interface TrocaRepository extends JpaRepository<Troca, Long> {
     
     List<Troca> findByStatus(Troca.StatusTroca status);
     
-    @Query("SELECT t FROM Troca t WHERE t.agendamento.usuario = :usuario")
-    List<Troca> findByUsuario(@Param("usuario") com.unilivros.model.Usuario usuario);
+    boolean existsByAgendamento(Agendamento agendamento);
     
-    @Query("SELECT t FROM Troca t WHERE t.agendamento.usuario = :usuario AND t.status = :status")
-    List<Troca> findByUsuarioAndStatus(@Param("usuario") com.unilivros.model.Usuario usuario, 
+    @Query("SELECT t FROM Troca t WHERE t.agendamento.proposta.usuario.id = :usuarioId")
+    List<Troca> findByUsuario(@Param("usuarioId") Long usuarioId);
+    
+    @Query("SELECT t FROM Troca t WHERE t.agendamento.proposta.usuario.id = :usuarioId AND t.status = :status")
+    List<Troca> findByUsuarioAndStatus(@Param("usuarioId") Long usuarioId, 
                                       @Param("status") Troca.StatusTroca status);
     
     @Query("SELECT t FROM Troca t WHERE t.dataConfirmacao BETWEEN :inicio AND :fim")
