@@ -32,7 +32,7 @@ public class Troca {
     
     @DecimalMin(value = "0.0", message = "Avaliação deve ser pelo menos 0.0")
     @DecimalMax(value = "5.0", message = "Avaliação deve ser no máximo 5.0")
-    @Column(precision = 3, scale = 2)
+    @Column
     private Double avaliacao;
     
     @Column(length = 500)

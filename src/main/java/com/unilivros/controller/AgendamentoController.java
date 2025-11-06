@@ -66,21 +66,21 @@ public class AgendamentoController {
         List<AgendamentoDTO> agendamentos = agendamentoService.buscarPorPeriodo(inicio, fim);
         return ResponseEntity.ok(agendamentos);
     }
-    
-    @GetMapping("/usuario/{usuarioId}/periodo")
-    public ResponseEntity<List<AgendamentoDTO>> buscarPorUsuarioEPeriodo(
-            @PathVariable Long usuarioId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
-        List<AgendamentoDTO> agendamentos = agendamentoService.buscarPorUsuarioEPeriodo(usuarioId, inicio, fim);
-        return ResponseEntity.ok(agendamentos);
-    }
-    
-    @GetMapping("/futuros/status/{status}")
-    public ResponseEntity<List<AgendamentoDTO>> buscarFuturosPorStatus(@PathVariable Agendamento.StatusAgendamento status) {
-        List<AgendamentoDTO> agendamentos = agendamentoService.buscarFuturosPorStatus(status);
-        return ResponseEntity.ok(agendamentos);
-    }
+//
+//    @GetMapping("/usuario/{usuarioId}/periodo")
+//    public ResponseEntity<List<AgendamentoDTO>> buscarPorUsuarioEPeriodo(
+//            @PathVariable Long usuarioId,
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
+//        List<AgendamentoDTO> agendamentos = agendamentoService.buscarPorUsuarioEPeriodo(usuarioId, inicio, fim);
+//        return ResponseEntity.ok(agendamentos);
+//    }
+//
+//    @GetMapping("/futuros/status/{status}")
+//    public ResponseEntity<List<AgendamentoDTO>> buscarFuturosPorStatus(@PathVariable Agendamento.StatusAgendamento status) {
+//        List<AgendamentoDTO> agendamentos = agendamentoService.buscarFuturosPorStatus(status);
+//        return ResponseEntity.ok(agendamentos);
+//    }
     
     @GetMapping("/passados/status/{status}")
     public ResponseEntity<List<AgendamentoDTO>> buscarPassadosPorStatus(@PathVariable Agendamento.StatusAgendamento status) {

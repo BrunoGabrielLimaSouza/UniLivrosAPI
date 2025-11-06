@@ -35,25 +35,25 @@ public class AgendamentoService {
     private ModelMapper modelMapper;
     
     public AgendamentoDTO criarAgendamento(AgendamentoDTO agendamentoDTO) {
-        // Verificar se proposta existe
+
         Proposta proposta = propostaRepository.findById(agendamentoDTO.getPropostaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta", agendamentoDTO.getPropostaId()));
         
-        // Verificar se usuário existe
+
         Usuario usuario = usuarioRepository.findById(agendamentoDTO.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", agendamentoDTO.getUsuarioId()));
-        
-        // Verificar se proposta está aceita
+
+
         if (proposta.getStatus() != Proposta.StatusProposta.ACEITA) {
             throw new BusinessException("Apenas propostas aceitas podem ter agendamento");
         }
         
-        // Verificar se já existe agendamento para esta proposta
+
         if (proposta.getAgendamento() != null) {
             throw new BusinessException("Já existe agendamento para esta proposta");
         }
         
-        // Verificar se data é futura
+
         if (agendamentoDTO.getDataHora().isBefore(LocalDateTime.now())) {
             throw new BusinessException("Data e hora devem ser futuras");
         }
@@ -121,23 +121,23 @@ public class AgendamentoService {
                 .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
                 .collect(Collectors.toList());
     }
-    
-    @Transactional(readOnly = true)
-    public List<AgendamentoDTO> buscarPorUsuarioEPeriodo(Long usuarioId, LocalDateTime inicio, LocalDateTime fim) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
-        
-        return agendamentoRepository.findByUsuarioAndDataHoraBetween(usuario, inicio, fim).stream()
-                .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
-                .collect(Collectors.toList());
-    }
-    
-    @Transactional(readOnly = true)
-    public List<AgendamentoDTO> buscarFuturosPorStatus(Agendamento.StatusAgendamento status) {
-        return agendamentoRepository.findFuturosByStatus(LocalDateTime.now(), status).stream()
-                .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
-                .collect(Collectors.toList());
-    }
+//
+//    @Transactional(readOnly = true)
+//    public List<AgendamentoDTO> buscarPorUsuarioEPeriodo(Long usuarioId, LocalDateTime inicio, LocalDateTime fim) {
+//        Usuario usuario = usuarioRepository.findById(usuarioId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
+//
+//        return agendamentoRepository.findByUsuarioAndDataHoraBetween(usuario, inicio, fim).stream()
+//                .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
+//                .collect(Collectors.toList());
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public List<AgendamentoDTO> buscarFuturosPorStatus(Agendamento.StatusAgendamento status) {
+//        return agendamentoRepository.findFuturosByStatus(LocalDateTime.now(), status).stream()
+//                .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
+//                .collect(Collectors.toList());
+//    }
     
     @Transactional(readOnly = true)
     public List<AgendamentoDTO> buscarPassadosPorStatus(Agendamento.StatusAgendamento status) {
@@ -150,7 +150,7 @@ public class AgendamentoService {
         Agendamento agendamentoExistente = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
         
-        // Verificar se data é futura
+
         if (agendamentoDTO.getDataHora().isBefore(LocalDateTime.now())) {
             throw new BusinessException("Data e hora devem ser futuras");
         }

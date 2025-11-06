@@ -40,8 +40,7 @@ public class UsuarioDTO {
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
-    // Construtores
+
     public UsuarioDTO() {}
     
     public UsuarioDTO(String matricula, String nome, String email, String senha, String curso, Integer semestre) {

@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/conquistas")
 @CrossOrigin(origins = "*")
-public class ConquistaController {
+public class  ConquistaController {
     
     @Autowired
     private ConquistaService conquistaService;

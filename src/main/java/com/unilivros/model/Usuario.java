@@ -11,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "usuarios")
-public class Usuario {
+public class  Usuario {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,7 +53,7 @@ public class Usuario {
     
     @DecimalMin(value = "0.0", message = "Avaliação deve ser pelo menos 0.0")
     @DecimalMax(value = "5.0", message = "Avaliação deve ser no máximo 5.0")
-    @Column(precision = 3, scale = 2)
+    @Column
     private Double avaliacao = 0.0;
     
     @CreationTimestamp

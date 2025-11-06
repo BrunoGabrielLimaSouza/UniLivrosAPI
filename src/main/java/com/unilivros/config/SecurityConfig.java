@@ -29,7 +29,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                        /*.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/usuarios/**").permitAll()
                 .requestMatchers("/api/livros/**").permitAll()
                 .requestMatchers("/api/propostas/**").permitAll()
@@ -37,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/trocas/**").permitAll()
                 .requestMatchers("/api/conquistas/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().authenticated()*/
             );
 
         return http.build();

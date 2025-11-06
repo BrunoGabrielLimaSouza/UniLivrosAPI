@@ -17,10 +17,10 @@ public interface TrocaRepository extends JpaRepository<Troca, Long> {
     
     boolean existsByAgendamento(Agendamento agendamento);
     
-    @Query("SELECT t FROM Troca t WHERE t.agendamento.proposta.usuario.id = :usuarioId")
+    @Query("SELECT t FROM Troca t JOIN t.usuarios tu WHERE tu.usuario.id = :usuarioId")
     List<Troca> findByUsuario(@Param("usuarioId") Long usuarioId);
     
-    @Query("SELECT t FROM Troca t WHERE t.agendamento.proposta.usuario.id = :usuarioId AND t.status = :status")
+    @Query("SELECT t FROM Troca t JOIN t.usuarios tu WHERE tu.usuario.id = :usuarioId AND t.status = :status")
     List<Troca> findByUsuarioAndStatus(@Param("usuarioId") Long usuarioId, 
                                       @Param("status") Troca.StatusTroca status);
     

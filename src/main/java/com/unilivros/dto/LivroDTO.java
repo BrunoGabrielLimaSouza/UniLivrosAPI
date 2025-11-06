@@ -39,7 +39,7 @@ public class LivroDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
-    // Construtores
+
     public LivroDTO() {}
     
     public LivroDTO(String titulo, String autor, String editora, Integer ano, String genero, Livro.CondicaoLivro condicao) {
@@ -50,8 +50,7 @@ public class LivroDTO {
         this.genero = genero;
         this.condicao = condicao;
     }
-    
-    // Getters e Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

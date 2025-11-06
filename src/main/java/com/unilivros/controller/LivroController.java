@@ -5,6 +5,7 @@ import com.unilivros.model.Livro;
 import com.unilivros.service.LivroService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -103,6 +104,14 @@ public class LivroController {
     public ResponseEntity<List<String>> listarEditoras() {
         List<String> editoras = livroService.listarEditoras();
         return ResponseEntity.ok(editoras);
+    }
+    @GetMapping("/recentes")
+    public ResponseEntity<Page<LivroDTO>> listarMaisRecentesPaginado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<LivroDTO> livrosRecentes = livroService.listarMaisRecentesPaginado(page, size);
+        return ResponseEntity.ok(livrosRecentes);
     }
     
     @PutMapping("/{id}")

@@ -47,11 +47,11 @@ public class Conquista {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    // Relacionamentos
+
     @OneToMany(mappedBy = "conquista", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ConquistaUsuario> usuarios = new ArrayList<>();
     
-    // Construtores
+
     public Conquista() {}
     
     public Conquista(String nome, String descricao, String icone, Integer xpNecessario, TipoConquista tipo) {
@@ -62,7 +62,7 @@ public class Conquista {
         this.tipo = tipo;
     }
     
-    // Getters e Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -90,7 +90,7 @@ public class Conquista {
     public List<ConquistaUsuario> getUsuarios() { return usuarios; }
     public void setUsuarios(List<ConquistaUsuario> usuarios) { this.usuarios = usuarios; }
     
-    // Enum para tipo de conquista
+
     public enum TipoConquista {
         PRIMEIRA_TROCA("Primeira Troca"),
         TROCAS_MULTIPLAS("Múltiplas Trocas"),

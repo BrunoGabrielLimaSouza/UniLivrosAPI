@@ -62,14 +62,14 @@ public class Livro {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    // Relacionamentos
+
     @OneToMany(mappedBy = "livro", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UsuarioLivro> usuarios = new ArrayList<>();
     
     @OneToMany(mappedBy = "livro", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LivroProposta> propostas = new ArrayList<>();
     
-    // Construtores
+
     public Livro() {}
     
     public Livro(String titulo, String autor, String editora, Integer ano, String genero, CondicaoLivro condicao) {
@@ -81,7 +81,7 @@ public class Livro {
         this.condicao = condicao;
     }
     
-    // Getters e Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -121,7 +121,7 @@ public class Livro {
     public List<LivroProposta> getPropostas() { return propostas; }
     public void setPropostas(List<LivroProposta> propostas) { this.propostas = propostas; }
     
-    // Enum para condição do livro
+
     public enum CondicaoLivro {
         NOVO("Novo"),
         SEMI_NOVO("Semi-novo"),

@@ -51,7 +51,7 @@ public class Agendamento {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
     
-    // Construtores
+
     public Agendamento() {}
     
     public Agendamento(LocalDateTime dataHora, String local, Proposta proposta, Usuario usuario) {
@@ -61,7 +61,7 @@ public class Agendamento {
         this.usuario = usuario;
     }
     
-    // Getters e Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -89,7 +89,7 @@ public class Agendamento {
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
     
-    // Enum para status do agendamento
+
     public enum StatusAgendamento {
         AGENDADO("Agendado"),
         CONFIRMADO("Confirmado"),
