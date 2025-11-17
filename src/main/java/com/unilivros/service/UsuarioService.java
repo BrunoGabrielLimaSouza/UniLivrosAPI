@@ -28,12 +28,12 @@ public class UsuarioService {
     private PasswordEncoder passwordEncoder;
     
     public UsuarioDTO criarUsuario(UsuarioDTO usuarioDTO) {
-        // Verificar se email já existe
+
         if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
             throw new BusinessException("Email já cadastrado");
         }
         
-        // Verificar se matrícula já existe
+
         if (usuarioRepository.existsByMatricula(usuarioDTO.getMatricula())) {
             throw new BusinessException("Matrícula já cadastrada");
         }
@@ -121,19 +121,19 @@ public class UsuarioService {
         Usuario usuarioExistente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
         
-        // Verificar se email já existe em outro usuário
+
         if (!usuarioExistente.getEmail().equals(usuarioDTO.getEmail()) && 
             usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
             throw new BusinessException("Email já cadastrado");
         }
         
-        // Verificar se matrícula já existe em outro usuário
+
         if (!usuarioExistente.getMatricula().equals(usuarioDTO.getMatricula()) && 
             usuarioRepository.existsByMatricula(usuarioDTO.getMatricula())) {
             throw new BusinessException("Matrícula já cadastrada");
         }
         
-        // Criptografar senha se fornecida
+
         if (usuarioDTO.getSenha() != null && !usuarioDTO.getSenha().isEmpty()) {
             usuarioDTO.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
         } else {
@@ -165,12 +165,12 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
         
-        // Calcular nova avaliação média
+
         Double avaliacaoAtual = usuario.getAvaliacao();
         if (avaliacaoAtual == null || avaliacaoAtual == 0.0) {
             usuario.setAvaliacao(novaAvaliacao);
         } else {
-            // Aqui você pode implementar uma lógica mais complexa para calcular a média
+
             usuario.setAvaliacao((avaliacaoAtual + novaAvaliacao) / 2);
         }
         
