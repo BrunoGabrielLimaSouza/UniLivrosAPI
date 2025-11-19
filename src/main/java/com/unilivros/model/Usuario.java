@@ -48,7 +48,6 @@ public class Usuario {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relacionamentos
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UsuarioLivro> livros = new ArrayList<>();
 

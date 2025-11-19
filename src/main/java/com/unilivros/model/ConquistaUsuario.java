@@ -28,7 +28,6 @@ public class ConquistaUsuario {
     @Column(name = "conquistada_em", nullable = false, updatable = false)
     private LocalDateTime conquistadaEm;
     
-    // Construtores
     public ConquistaUsuario() {}
     
     public ConquistaUsuario(Usuario usuario, Conquista conquista) {
@@ -36,7 +35,6 @@ public class ConquistaUsuario {
         this.conquista = conquista;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

@@ -32,7 +32,6 @@ public class TrocaUsuario {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    // Construtores
     public TrocaUsuario() {}
     
     public TrocaUsuario(Usuario usuario, Troca troca, TipoParticipacao tipo) {
@@ -41,7 +40,6 @@ public class TrocaUsuario {
         this.tipo = tipo;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -57,7 +55,6 @@ public class TrocaUsuario {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     
-    // Enum para tipo de participação na troca
     public enum TipoParticipacao {
         PARTICIPANTE("Participante"),
         OBSERVADOR("Observador");

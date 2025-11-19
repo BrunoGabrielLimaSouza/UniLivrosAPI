@@ -32,7 +32,6 @@ public class LivroProposta {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    // Construtores
     public LivroProposta() {}
     
     public LivroProposta(Livro livro, Proposta proposta, TipoLivroProposta tipo) {
@@ -41,7 +40,6 @@ public class LivroProposta {
         this.tipo = tipo;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -57,7 +55,6 @@ public class LivroProposta {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     
-    // Enum para tipo de livro na proposta
     public enum TipoLivroProposta {
         OFERTA("Oferta"),
         SOLICITACAO("Solicitação");

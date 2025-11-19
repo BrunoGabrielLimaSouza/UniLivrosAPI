@@ -42,7 +42,6 @@ public class Agendamento {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    // Relacionamentos
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proposta_id", nullable = false)
     private Proposta proposta;

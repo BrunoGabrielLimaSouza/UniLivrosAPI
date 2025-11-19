@@ -27,6 +27,18 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    @Transactional(readOnly = true)
+    public Usuario authenticateUser(String email, String senha) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Email ou senha inválidos"));
+        
+        if (!passwordEncoder.matches(senha, usuario.getSenha())) {
+            throw new BusinessException("Email ou senha inválidos");
+        }
+        
+        return usuario;
+    }
+    
     public UsuarioDTO criarUsuario(UsuarioDTO usuarioDTO) {
 
         if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {

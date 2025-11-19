@@ -31,7 +31,6 @@ public class UsuarioLivro {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    // Construtores
     public UsuarioLivro() {}
     
     public UsuarioLivro(Usuario usuario, Livro livro) {
@@ -45,7 +44,6 @@ public class UsuarioLivro {
         this.disponivelParaTroca = disponivelParaTroca;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

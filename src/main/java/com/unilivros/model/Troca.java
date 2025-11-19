@@ -46,7 +46,6 @@ public class Troca {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    // Relacionamentos
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agendamento_id", nullable = false)
     private Agendamento agendamento;
@@ -54,14 +53,12 @@ public class Troca {
     @OneToMany(mappedBy = "troca", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TrocaUsuario> usuarios = new ArrayList<>();
     
-    // Construtores
     public Troca() {}
     
     public Troca(Agendamento agendamento) {
         this.agendamento = agendamento;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -92,7 +89,6 @@ public class Troca {
     public List<TrocaUsuario> getUsuarios() { return usuarios; }
     public void setUsuarios(List<TrocaUsuario> usuarios) { this.usuarios = usuarios; }
     
-    // Enum para status da troca
     public enum StatusTroca {
         PENDENTE("Pendente"),
         CONFIRMADA("Confirmada"),

@@ -33,7 +33,6 @@ public class Proposta {
     @Column(name = "data_resposta")
     private LocalDateTime dataResposta;
     
-    // Relacionamentos
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proponente_id", nullable = false)
     private Usuario proponente;
@@ -48,7 +47,6 @@ public class Proposta {
     @OneToOne(mappedBy = "proposta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Agendamento agendamento;
     
-    // Construtores
     public Proposta() {}
     
     public Proposta(Usuario proponente, Usuario proposto) {
@@ -56,7 +54,6 @@ public class Proposta {
         this.proposto = proposto;
     }
     
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -84,7 +81,6 @@ public class Proposta {
     public Agendamento getAgendamento() { return agendamento; }
     public void setAgendamento(Agendamento agendamento) { this.agendamento = agendamento; }
     
-    // Enum para status da proposta
     public enum StatusProposta {
         PENDENTE("Pendente"),
         ACEITA("Aceita"),
