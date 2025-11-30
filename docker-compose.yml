@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Container do Banco de Dados
+  meu-postgres:
+    image: postgres:15
+    container_name: unilivros-db
+    environment:
+      POSTGRES_DB: unilivros
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4677
+    ports:
+      - "5433:5432" # Libera acesso externo se você quiser usar o pgAdmin
+    networks:
+      - rede-unilivros
+
+  # Container da API Java
+  minha-api:
+    image: unilivros/backend:v1 # Nome da sua imagem
+    container_name: unilivros-api
+    build: . # Opcional: constrói a imagem se tiver Dockerfile
+    depends_on:
+      - meu-postgres
+    environment:
+      # AQUI ESTÁ O SEGREDO: trocamos 'localhost' pelo nome do serviço 'meu-postgres'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://meu-postgres:5432/unilivros
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 4677
+      # Se o seu Hibernate validar o schema:
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8088:8088"
+    networks:
+      - rede-unilivros
+
+networks:
+  rede-unilivros:
+    driver: bridge
