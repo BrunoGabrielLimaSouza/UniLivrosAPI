@@ -1,16 +1,18 @@
 package com.unilivros.dto;
 
 public class AuthResponseDTO {
-    
+
     private String token;
     private String type = "Bearer";
-    private UsuarioDTO usuario;
+
+
+    private UsuarioDTO user;
 
     public AuthResponseDTO() {}
 
-    public AuthResponseDTO(String token, UsuarioDTO usuario) {
+    public AuthResponseDTO(String token, UsuarioDTO user) {
         this.token = token;
-        this.usuario = usuario;
+        this.user = user;
     }
 
     public String getToken() {
@@ -29,13 +31,11 @@ public class AuthResponseDTO {
         this.type = type;
     }
 
-    public UsuarioDTO getUsuario() {
-        return usuario;
+    public UsuarioDTO getUser() { // Getter ajustado
+        return user;
     }
 
-    public void setUsuario(UsuarioDTO usuario) {
-        this.usuario = usuario;
+    public void setUser(UsuarioDTO user) { // Setter ajustado
+        this.user = user;
     }
 }
-
-

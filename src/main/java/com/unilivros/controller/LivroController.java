@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +21,26 @@ public class LivroController {
     
     @Autowired
     private LivroService livroService;
+
     
     @PostMapping
     public ResponseEntity<LivroDTO> criarLivro(@Valid @RequestBody LivroDTO livroDTO) {
         LivroDTO livroCriado = livroService.criarLivro(livroDTO);
         return new ResponseEntity<>(livroCriado, HttpStatus.CREATED);
     }
-    
+
+    @GetMapping("/meus-livros")
+    public ResponseEntity<List<LivroDTO>> listarMeusLivros() {
+        // 1. Pega o e-mail do usuário autenticado (via Token JWT)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        // 2. Chama o serviço para buscar os livros desse usuário
+        List<LivroDTO> livros = livroService.buscarLivrosDoUsuario(emailUsuario);
+
+        return ResponseEntity.ok(livros);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LivroDTO> buscarPorId(@PathVariable Long id) {
         LivroDTO livro = livroService.buscarPorId(id);
