@@ -1,6 +1,8 @@
 package com.unilivros.controller;
 
 import com.unilivros.dto.*;
+import com.unilivros.exception.BusinessException; // <--- NOVO IMPORT
+import com.unilivros.exception.ResourceNotFoundException; // <--- NOVO IMPORT
 import com.unilivros.model.Usuario;
 import com.unilivros.repository.UsuarioRepository;
 import com.unilivros.security.JwtTokenProvider;
@@ -9,15 +11,14 @@ import com.unilivros.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Random;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -45,10 +46,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Void> register(@Valid @RequestBody UsuarioDTO data) {
         if (this.usuarioRepository.findByEmail(data.getEmail()).isPresent())
-            throw new RuntimeException("Email já cadastrado");
+            throw new BusinessException("Email já cadastrado.");
 
         if (this.usuarioRepository.existsByMatricula(data.getMatricula()))
-            throw new RuntimeException("Matrícula já cadastrada");
+            throw new BusinessException("Matrícula já cadastrada.");
 
         String encryptedPassword = passwordEncoder.encode(data.getSenha());
 
@@ -59,7 +60,7 @@ public class AuthController {
         newUser.setEmail(data.getEmail());
         newUser.setMatricula(data.getMatricula());
         newUser.setCurso(data.getCurso());
-        newUser.setSemestre(String.valueOf(data.getSemestre()));
+        newUser.setSemestre(data.getSemestre() != null ? String.valueOf(data.getSemestre()) : null);
         newUser.setSenha(encryptedPassword);
 
         newUser.setVerificationCode(codigo);
@@ -76,10 +77,6 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
         Usuario usuario = usuarioService.authenticateUser(loginDTO.getEmail(), loginDTO.getSenha());
 
-        if (!usuario.isEnabled()) {
-            throw new RuntimeException("Usuário não confirmado. Verifique seu e-mail.");
-        }
-
         String token = tokenProvider.generateToken(usuario.getId());
 
         UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
@@ -93,7 +90,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgotPassword(@RequestBody VerificationDTO dto) {
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "Email", dto.getEmail()));
 
         String codigo = String.format("%06d", new Random().nextInt(999999));
 
@@ -108,10 +105,10 @@ public class AuthController {
     @PostMapping("/verify-email")
     public ResponseEntity<Void> verifyEmail(@RequestBody VerificationDTO dto) {
         Usuario usuario = usuarioRepository.findByVerificationCode(dto.getCode())
-                .orElseThrow(() -> new RuntimeException("Código inválido"));
+                .orElseThrow(() -> new BusinessException("Código de verificação inválido."));
 
         usuario.setEnabled(true);
-        usuario.setVerificationCode(null); // Limpa o código após uso
+        usuario.setVerificationCode(null);
         usuarioRepository.save(usuario);
 
         return ResponseEntity.ok().build();
@@ -120,7 +117,7 @@ public class AuthController {
     @PostMapping("/validate-reset-code")
     public ResponseEntity<Void> validateResetCode(@RequestBody VerificationDTO dto) {
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "Email", dto.getEmail()));
 
         if (usuario.getVerificationCode() == null || !usuario.getVerificationCode().equals(dto.getCode())) {
             return ResponseEntity.badRequest().build();
@@ -131,11 +128,12 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody VerificationDTO dto) {
+        // Usa ResourceNotFoundException para email
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "Email", dto.getEmail()));
 
         if (usuario.getVerificationCode() == null || !usuario.getVerificationCode().equals(dto.getCode())) {
-            throw new RuntimeException("Código inválido");
+            throw new BusinessException("Código de recuperação inválido.");
         }
 
         usuario.setSenha(passwordEncoder.encode(dto.getNewPassword()));
