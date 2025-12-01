@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,18 +61,31 @@ public class LivroService {
         dto.setDescricao(livro.getDescricao());
         return dto;
     }
-    
-    public LivroDTO criarLivro(LivroDTO livroDTO) {
-        // Verificar se ISBN já existe (se fornecido)
-        if (livroDTO.getIsbn() != null && !livroDTO.getIsbn().isEmpty() && 
-            livroRepository.existsByIsbn(livroDTO.getIsbn())) {
-            throw new BusinessException("ISBN já cadastrado");
-        }
-        
-        Livro livro = modelMapper.map(livroDTO, Livro.class);
+
+    public LivroDTO criarLivro(LivroDTO dto) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        Livro livro = new Livro();
+        livro.setTitulo(dto.getTitulo());
+        livro.setAutor(dto.getAutor());
+        livro.setEditora(dto.getEditora());
+        livro.setAno(dto.getAno());
+        livro.setGenero(dto.getGenero());
+        livro.setCondicao(dto.getCondicao()); // Certifique-se que o Enum bate
+        livro.setDescricao(dto.getDescricao());
+
         livro = livroRepository.save(livro);
-        
-        return modelMapper.map(livro, LivroDTO.class);
+
+        UsuarioLivro vinculo = new UsuarioLivro();
+        vinculo.setUsuario(usuario);
+        vinculo.setLivro(livro);
+        vinculo.setDisponivelParaTroca(true); // Define se já entra disponível ou não
+
+        usuarioLivroRepository.save(vinculo);
+
+        return converterParaDTO(livro);
     }
     
     @Transactional(readOnly = true)
