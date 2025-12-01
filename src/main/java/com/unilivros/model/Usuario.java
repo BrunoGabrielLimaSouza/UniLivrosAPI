@@ -68,8 +68,8 @@ public class Usuario implements UserDetails {
     @Column(name = "verification_code")
     private String verificationCode;
 
-    @Column(name = "enabled")
-    private boolean enabled = false;
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = false;
 
     public Usuario() {}
 
