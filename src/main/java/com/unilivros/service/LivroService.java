@@ -4,7 +4,11 @@ import com.unilivros.dto.LivroDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
 import com.unilivros.model.Livro;
+import com.unilivros.model.Usuario;
+import com.unilivros.model.UsuarioLivro;
 import com.unilivros.repository.LivroRepository;
+import com.unilivros.repository.UsuarioLivroRepository;
+import com.unilivros.repository.UsuarioRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +26,40 @@ import java.util.stream.Collectors;
 public class LivroService {
     
     @Autowired
-    private LivroRepository livroRepository;
-    
-    @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private LivroRepository livroRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private UsuarioLivroRepository usuarioLivroRepository;
+
+    public List<LivroDTO> buscarLivrosDoUsuario(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + email));
+
+        List<UsuarioLivro> meusLivrosRelacao = usuarioLivroRepository.findByUsuario(usuario);
+
+        return meusLivrosRelacao.stream()
+                .map(relacao -> converterParaDTO(relacao.getLivro()))
+                .collect(Collectors.toList());
+    }
+
+    private LivroDTO converterParaDTO(Livro livro) {
+        LivroDTO dto = new LivroDTO();
+        dto.setId(livro.getId());
+        dto.setTitulo(livro.getTitulo());
+        dto.setAutor(livro.getAutor());
+        dto.setEditora(livro.getEditora());
+        dto.setAno(livro.getAno());
+        dto.setGenero(livro.getGenero());
+        dto.setCondicao(livro.getCondicao());
+        dto.setDescricao(livro.getDescricao());
+        return dto;
+    }
     
     public LivroDTO criarLivro(LivroDTO livroDTO) {
         // Verificar se ISBN já existe (se fornecido)
