@@ -1,35 +1,35 @@
 package com.unilivros.controller;
 
-import com.unilivros.dto.AuthResponseDTO;
-import com.unilivros.dto.LoginDTO;
-import com.unilivros.dto.UsuarioDTO;
+import com.unilivros.dto.*;
 import com.unilivros.model.Usuario;
+import com.unilivros.repository.UsuarioRepository;
 import com.unilivros.security.JwtTokenProvider;
+import com.unilivros.service.EmailService;
 import com.unilivros.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import com.unilivros.dto.*;
-import com.unilivros.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Random;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
-    
+
     @Autowired
     private UsuarioService usuarioService;
-    
+
     @Autowired
     private JwtTokenProvider tokenProvider;
-    
+
     @Autowired
     private ModelMapper modelMapper;
 
@@ -39,13 +39,79 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@Valid @RequestBody UsuarioDTO data) {
+        if (this.usuarioRepository.findByEmail(data.getEmail()).isPresent())
+            throw new RuntimeException("Email já cadastrado");
+
+        if (this.usuarioRepository.existsByMatricula(data.getMatricula()))
+            throw new RuntimeException("Matrícula já cadastrada");
+
+        String encryptedPassword = passwordEncoder.encode(data.getSenha());
+
+        String codigo = String.format("%06d", new Random().nextInt(999999));
+
+        Usuario newUser = new Usuario();
+        newUser.setNome(data.getNome());
+        newUser.setEmail(data.getEmail());
+        newUser.setMatricula(data.getMatricula());
+        newUser.setCurso(data.getCurso());
+        newUser.setSemestre(String.valueOf(data.getSemestre()));
+        newUser.setSenha(encryptedPassword);
+
+        newUser.setVerificationCode(codigo);
+        newUser.setEnabled(false);
+
+        this.usuarioRepository.save(newUser);
+
+        emailService.enviarCodigoConfirmacao(newUser.getEmail(), codigo);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
+        Usuario usuario = usuarioService.authenticateUser(loginDTO.getEmail(), loginDTO.getSenha());
+
+        if (!usuario.isEnabled()) {
+            throw new RuntimeException("Usuário não confirmado. Verifique seu e-mail.");
+        }
+
+        String token = tokenProvider.generateToken(usuario.getId());
+
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setSenha(null);
+
+        AuthResponseDTO response = new AuthResponseDTO(token, usuarioDTO);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestBody VerificationDTO dto) {
+        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+
+        String codigo = String.format("%06d", new Random().nextInt(999999));
+
+        usuario.setVerificationCode(codigo);
+        usuarioRepository.save(usuario);
+
+        emailService.enviarCodigoConfirmacao(usuario.getEmail(), codigo);
+
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/verify-email")
     public ResponseEntity<Void> verifyEmail(@RequestBody VerificationDTO dto) {
         Usuario usuario = usuarioRepository.findByVerificationCode(dto.getCode())
                 .orElseThrow(() -> new RuntimeException("Código inválido"));
 
         usuario.setEnabled(true);
-        usuario.setVerificationCode(null);
+        usuario.setVerificationCode(null); // Limpa o código após uso
         usuarioRepository.save(usuario);
 
         return ResponseEntity.ok().build();
@@ -53,11 +119,10 @@ public class AuthController {
 
     @PostMapping("/validate-reset-code")
     public ResponseEntity<Void> validateResetCode(@RequestBody VerificationDTO dto) {
-        // Apenas verifica se o código existe e bate com o email (lógica simplificada)
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email não encontrado"));
 
-        if (!dto.getCode().equals(usuario.getVerificationCode())) {
+        if (usuario.getVerificationCode() == null || !usuario.getVerificationCode().equals(dto.getCode())) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -69,7 +134,7 @@ public class AuthController {
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email não encontrado"));
 
-        if (!dto.getCode().equals(usuario.getVerificationCode())) {
+        if (usuario.getVerificationCode() == null || !usuario.getVerificationCode().equals(dto.getCode())) {
             throw new RuntimeException("Código inválido");
         }
 
@@ -80,40 +145,12 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody UsuarioDTO usuarioDTO) {
-        UsuarioDTO usuarioCriado = usuarioService.criarUsuario(usuarioDTO);
-        
-        String token = tokenProvider.generateToken(usuarioCriado.getId());
-        
-        AuthResponseDTO response = new AuthResponseDTO(token, usuarioCriado);
-        
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-    
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
-        Usuario usuario = usuarioService.authenticateUser(loginDTO.getEmail(), loginDTO.getSenha());
-        
-        String token = tokenProvider.generateToken(usuario.getId());
-        
-        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
-        usuarioDTO.setSenha(null);
-        
-        AuthResponseDTO response = new AuthResponseDTO(token, usuarioDTO);
-        
-        return ResponseEntity.ok(response);
-    }
-    
     @GetMapping("/me")
     public ResponseEntity<UsuarioDTO> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         UsuarioDTO usuario = usuarioService.buscarPorEmail(email);
         usuario.setSenha(null);
-        
+
         return ResponseEntity.ok(usuario);
     }
 }
-
-

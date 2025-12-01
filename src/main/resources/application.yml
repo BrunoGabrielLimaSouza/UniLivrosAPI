@@ -28,6 +28,21 @@ spring:
       secret: unilivros-secret-key-2024-very-secure
       expiration: 86400000 # 24 horas
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: suporteunilivros@gmail.com
+    password: rnup dnnd bfeb oikw
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
 logging:
   level:
     com.unilivros: DEBUG
