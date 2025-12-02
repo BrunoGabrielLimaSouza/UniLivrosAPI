@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Random;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -48,7 +47,7 @@ public class AuthController {
     @Autowired
     private EmailService emailService;
 
-    // --- CADASTRO COM ENVIO DE E-MAIL (COM DIAGNÓSTICO DE ERRO) ---
+    // --- CADASTRO COM ENVIO DE E-MAIL ---
     @PostMapping("/register")
     public ResponseEntity<ApiResponseDTO> register(@Valid @RequestBody UsuarioDTO data) {
         try {
@@ -67,30 +66,32 @@ public class AuthController {
             newUser.setEmail(data.getEmail());
             newUser.setMatricula(data.getMatricula());
             newUser.setCurso(data.getCurso());
-            // Garante que o semestre é convertido para String de forma segura.
             newUser.setSemestre(data.getSemestre() != null ? String.valueOf(data.getSemestre()) : null);
             newUser.setSenha(encryptedPassword);
 
             newUser.setVerificationCode(codigo);
             newUser.setEnabled(false);
 
-            // Passo 1: Tenta salvar o usuário
-            logger.info("Salvando usuário no banco de dados: {}", data.getEmail());
             this.usuarioRepository.save(newUser);
 
-            // Passo 2: Tenta enviar o e-mail
-            logger.info("Enviando email de confirmação para: {}", data.getEmail());
+            logger.info("Tentando enviar email de confirmação para: {}", data.getEmail());
             emailService.enviarCodigoConfirmacao(newUser.getEmail(), codigo);
 
-            return ResponseEntity.ok(new ApiResponseDTO(true, "Cadastro realizado com sucesso! Verifique seu e-mail para confirmar."));
+            return ResponseEntity.ok(new ApiResponseDTO(true,
+                    "Cadastro realizado com sucesso! " +
+                            "Verifique seu e-mail para o código de confirmação. " +
+                            "Se não receber, verifique a pasta de spam."));
 
         } catch (BusinessException e) {
             logger.warn("Erro de negócio no cadastro: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponseDTO(false, e.getMessage()));
         } catch (Exception e) {
-            logger.error("ERRO GRAVE NO CADASTRO: ", e);
+            logger.error("ERRO NO CADASTRO: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO(false, "Erro interno no servidor. Tente novamente mais tarde."));
+                    .body(new ApiResponseDTO(false,
+                            "Erro interno no servidor. O usuário foi criado, " +
+                                    "mas não foi possível enviar o email de confirmação. " +
+                                    "Entre em contato com o suporte."));
         }
     }
 
@@ -114,7 +115,6 @@ public class AuthController {
     public ResponseEntity<ApiResponseDTO> forgotPassword(@RequestBody VerificationDTO dto) {
         try {
             logger.info("Solicitando código de recuperação para: {}", dto.getEmail());
-            logger.info("Usando serviço de email: SendGrid");
 
             Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                     .orElseThrow(() -> new ResourceNotFoundException("Usuário", "Email", dto.getEmail()));
@@ -124,19 +124,28 @@ public class AuthController {
             usuario.setVerificationCode(codigo);
             usuarioRepository.save(usuario);
 
-            logger.info("Enviando email via SendGrid para: {}", dto.getEmail());
+            logger.info("Gerado código: {} para email: {}", codigo, dto.getEmail());
             emailService.enviarCodigoConfirmacao(usuario.getEmail(), codigo);
 
-            return ResponseEntity.ok(new ApiResponseDTO(true, "Código de recuperação enviado para seu e-mail."));
+            String mensagem = "Código de recuperação processado. " +
+                    "Verifique seu e-mail. " +
+                    "Se não receber em alguns minutos, verifique a pasta de spam " +
+                    "ou entre em contato com o suporte.";
+
+            return ResponseEntity.ok(new ApiResponseDTO(true, mensagem));
 
         } catch (ResourceNotFoundException e) {
             logger.warn("Usuário não encontrado: {}", dto.getEmail());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO(false, "E-mail não cadastrado no sistema."));
+            // Por segurança, não revelamos se o email existe ou não
+            return ResponseEntity.ok(new ApiResponseDTO(true,
+                    "Se o email estiver cadastrado, você receberá um código de recuperação em alguns minutos."));
         } catch (Exception e) {
             logger.error("Erro ao processar recuperação de senha: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO(false, "Erro ao enviar código de recuperação. Tente novamente."));
+                    .body(new ApiResponseDTO(false,
+                            "Erro ao processar solicitação. " +
+                                    "O código foi gerado, mas pode haver problemas no envio do email. " +
+                                    "Tente novamente em alguns minutos ou entre em contato com o suporte."));
         }
     }
 
@@ -154,7 +163,7 @@ public class AuthController {
             usuarioRepository.save(usuario);
 
             logger.info("Email verificado com sucesso para usuário: {}", usuario.getEmail());
-            return ResponseEntity.ok(new ApiResponseDTO(true, "Email verificado com sucesso!"));
+            return ResponseEntity.ok(new ApiResponseDTO(true, "Email verificado com sucesso! Você já pode fazer login."));
 
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(new ApiResponseDTO(false, e.getMessage()));
@@ -162,27 +171,6 @@ public class AuthController {
             logger.error("Erro ao verificar email: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDTO(false, "Erro ao verificar código."));
-        }
-    }
-
-    @PostMapping("/test-email")
-    public ResponseEntity<ApiResponseDTO> testEmail() {
-        try {
-            logger.info("Testando serviço de email SendGrid...");
-
-            // Testa conexão
-            emailService.testarConexaoSendGrid();
-
-            // Envia email de teste
-            String codigoTeste = "123456";
-            emailService.enviarCodigoConfirmacao("teste@souunit.com.br", codigoTeste);
-
-            return ResponseEntity.ok(new ApiResponseDTO(true, "Serviço de email testado com sucesso!"));
-
-        } catch (Exception e) {
-            logger.error("Falha no teste de email: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO(false, "Falha no teste de email: " + e.getMessage()));
         }
     }
 
@@ -231,7 +219,7 @@ public class AuthController {
             usuarioRepository.save(usuario);
 
             logger.info("Senha resetada com sucesso para: {}", dto.getEmail());
-            return ResponseEntity.ok(new ApiResponseDTO(true, "Senha redefinida com sucesso!"));
+            return ResponseEntity.ok(new ApiResponseDTO(true, "Senha redefinida com sucesso! Faça login com sua nova senha."));
 
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(new ApiResponseDTO(false, e.getMessage()));
@@ -242,6 +230,44 @@ public class AuthController {
             logger.error("Erro ao resetar senha: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDTO(false, "Erro ao redefinir senha."));
+        }
+    }
+
+    // --- ENDPOINTS DE DIAGNÓSTICO ---
+
+    @GetMapping("/email-config")
+    public ResponseEntity<ApiResponseDTO> getEmailConfig() {
+        try {
+            String config = emailService.getConfiguracaoAtual();
+            return ResponseEntity.ok(new ApiResponseDTO(true, config));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDTO(false, "Erro ao obter configuração: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/test-email")
+    public ResponseEntity<ApiResponseDTO> testEmail(@RequestBody VerificationDTO dto) {
+        try {
+            logger.info("Testando serviço de email...");
+            emailService.testarConexaoEmail();
+
+            // Envia email de teste
+            String codigoTeste = "123456";
+            String emailTeste = dto.getEmail() != null ? dto.getEmail() : "teste@souunit.com.br";
+
+            emailService.enviarCodigoConfirmacao(emailTeste, codigoTeste);
+
+            return ResponseEntity.ok(new ApiResponseDTO(true,
+                    "Serviço de email testado com sucesso! " +
+                            "Verifique o email: " + emailTeste));
+
+        } catch (Exception e) {
+            logger.error("Falha no teste de email: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDTO(false,
+                            "Falha no teste de email. Sistema usando fallback. " +
+                                    "Erro: " + e.getMessage()));
         }
     }
 
