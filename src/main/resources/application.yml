@@ -31,17 +31,34 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: suporteunilivros@gmail.com
-    password: ${SENHA}
+    username: ${MAIL_USERNAME:suporteunilivros@gmail.com}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    default-encoding: UTF-8
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-          connectiontimeout: 5000
-          timeout: 3000
-          writetimeout: 5000
+            required: true
+          ssl:
+            enable: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          debug: ${MAIL_DEBUG:true}  # Ativa debug do SMTP
+
+  # Configuração de teste para desenvolvimento (descomente para usar)
+  #mail:
+  #  host: localhost
+  #  port: 1025
+  #  properties:
+  #    mail:
+  #      smtp:
+  #        auth: false
+  #        starttls:
+  #          enable: false
 
 logging:
   level:
@@ -49,9 +66,51 @@ logging:
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.mail: DEBUG  # Logs detalhados do email
+    com.sun.mail: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+
+# Configuração para desenvolvimento local
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+        debug: true
+
+# Configuração para produção
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 15000
+          timeout: 15000
+          writetimeout: 15000
+          debug: false
