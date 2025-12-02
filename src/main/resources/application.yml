@@ -28,11 +28,12 @@ spring:
       secret: unilivros-secret-key-2024-very-secure
       expiration: 86400000 # 24 horas
 
+  # Configuração SendGrid
   mail:
-    host: smtp.gmail.com
+    host: smtp.sendgrid.net
     port: 587
-    username: ${MAIL_USERNAME:suporteunilivros@gmail.com}
-    password: ${MAIL_PASSWORD}
+    username: apikey  # Fixo para SendGrid
+    password: ${SENDGRID_API_KEY}  # Sua chave API do SendGrid
     protocol: smtp
     default-encoding: UTF-8
     properties:
@@ -42,23 +43,10 @@ spring:
           starttls:
             enable: true
             required: true
-          ssl:
-            enable: false
-          connectiontimeout: 10000
-          timeout: 10000
-          writetimeout: 10000
-          debug: ${MAIL_DEBUG:true}  # Ativa debug do SMTP
-
-  # Configuração de teste para desenvolvimento (descomente para usar)
-  #mail:
-  #  host: localhost
-  #  port: 1025
-  #  properties:
-  #    mail:
-  #      smtp:
-  #        auth: false
-  #        starttls:
-  #          enable: false
+          connectiontimeout: 15000
+          timeout: 15000
+          writetimeout: 15000
+          debug: ${MAIL_DEBUG:false}
 
 logging:
   level:
@@ -66,8 +54,7 @@ logging:
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.mail: DEBUG  # Logs detalhados do email
-    com.sun.mail: DEBUG
+    org.springframework.mail: DEBUG
 
 management:
   endpoints:
@@ -75,7 +62,28 @@ management:
       exposure:
         include: health,info,metrics
 
-# Configuração para desenvolvimento local
+# Configuração alternativa para porta 465 (SSL)
+---
+spring:
+  config:
+    activate:
+      on-profile: sendgrid-ssl
+  mail:
+    host: smtp.sendgrid.net
+    port: 465
+    username: apikey
+    password: ${SENDGRID_API_KEY}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 15000
+          timeout: 15000
+          writetimeout: 15000
+
+# Configuração para desenvolvimento (MailDev)
 ---
 spring:
   config:
@@ -92,25 +100,6 @@ spring:
             enable: false
         debug: true
 
-# Configuração para produção
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-          connectiontimeout: 15000
-          timeout: 15000
-          writetimeout: 15000
-          debug: false
+app:
+  email:
+    sender: suporteunilivros@gmail.com  # Deve ser um email verificado no SendGrid

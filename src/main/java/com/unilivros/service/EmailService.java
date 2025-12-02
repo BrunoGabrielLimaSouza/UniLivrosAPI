@@ -24,10 +24,13 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
-    private String remetente;
+    private String remetenteUsername;
 
     @Value("${spring.mail.properties.mail.debug:false}")
     private boolean debugMode;
+
+    @Value("${app.email.sender:suporteunilivros@gmail.com}")
+    private String senderEmail;
 
     public void enviarCodigoConfirmacao(String destinatario, String codigo) {
         if (!StringUtils.hasText(destinatario)) {
@@ -38,64 +41,32 @@ public class EmailService {
             throw new IllegalArgumentException("Código não pode ser vazio");
         }
 
-        logger.info("Iniciando envio de email para: {}", destinatario);
-        logger.info("Remetente configurado: {}", remetente);
+        logger.info("Enviando código de confirmação para: {}", destinatario);
+        logger.info("Usando SendGrid com usuário: {}", remetenteUsername);
 
-        if (debugMode) {
-            logger.debug("Modo debug ativado para email");
-            // Log de simulação para desenvolvimento
-            logger.info("=== SIMULAÇÃO DE EMAIL (DEV MODE) ===");
-            logger.info("Para: {}", destinatario);
-            logger.info("Código: {}", codigo);
-            logger.info("Assunto: Código de Verificação - UniLivros");
-            logger.info("==============================");
-            return; // Não envia email real em modo debug
+        // Modo debug para desenvolvimento
+        if (debugMode && remetenteUsername.equals("apikey")) {
+            logger.debug("Modo debug ativado para SendGrid");
+            enviarEmailSimulado(destinatario, codigo);
+            return;
         }
 
         try {
-            // Tentativa com MimeMessage (mais robusta)
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
 
-            helper.setFrom(remetente);
+            // Para SendGrid, o "from" deve ser um email verificado na sua conta SendGrid
+            helper.setFrom(senderEmail, "UniLivros");
             helper.setTo(destinatario);
             helper.setSubject("Código de Verificação - UniLivros");
             helper.setSentDate(new Date());
 
-            String htmlContent = String.format(
-                    "<html>" +
-                            "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
-                            "    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>" +
-                            "        <h2 style='color: #2c3e50; text-align: center;'>UniLivros - Confirmação de Cadastro</h2>" +
-                            "        <hr style='border: 1px solid #eee;'>" +
-                            "        <p>Olá,</p>" +
-                            "        <p>Seu código de verificação é:</p>" +
-                            "        <div style='background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;'>" +
-                            "            <h1 style='color: #2c3e50; margin: 0; letter-spacing: 5px; font-size: 28px;'>%s</h1>" +
-                            "        </div>" +
-                            "        <p>Insira este código para confirmar seu cadastro ou redefinir sua senha.</p>" +
-                            "        <p style='color: #7f8c8d; font-size: 12px;'>" +
-                            "            Este código é válido por 1 hora. Se você não solicitou este código, ignore este email." +
-                            "        </p>" +
-                            "        <hr style='border: 1px solid #eee;'>" +
-                            "        <p style='text-align: center; color: #95a5a6; font-size: 12px;'>" +
-                            "            UniLivros &copy; 2024 - Sistema de Troca de Livros Universitários" +
-                            "        </p>" +
-                            "    </div>" +
-                            "</body>" +
-                            "</html>",
-                    codigo
-            );
+            String htmlContent = criarConteudoEmailHtml(codigo);
 
-            helper.setText(htmlContent, true); // true = HTML
-
-            logger.debug("Configuração SMTP:");
-            logger.debug("Host: {}", System.getProperty("mail.smtp.host"));
-            logger.debug("Port: {}", System.getProperty("mail.smtp.port"));
-            logger.debug("Auth: {}", System.getProperty("mail.smtp.auth"));
+            helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            logger.info("Email enviado com SUCESSO para: {}", destinatario);
+            logger.info("Email enviado com SUCESSO via SendGrid para: {}", destinatario);
 
         } catch (MessagingException e) {
             logger.error("Erro ao criar mensagem de email para {}: {}", destinatario, e.getMessage(), e);
@@ -104,16 +75,10 @@ public class EmailService {
             try {
                 logger.info("Tentando fallback com SimpleMailMessage...");
                 SimpleMailMessage fallbackMessage = new SimpleMailMessage();
-                fallbackMessage.setFrom(remetente);
+                fallbackMessage.setFrom(senderEmail);
                 fallbackMessage.setTo(destinatario);
                 fallbackMessage.setSubject("Código de Verificação - UniLivros");
-                fallbackMessage.setText(String.format(
-                        "Olá!\n\nSeu código de verificação é: %s\n\n" +
-                                "Insira este código no aplicativo para confirmar seu cadastro ou redefinir sua senha.\n\n" +
-                                "Este código é válido por 1 hora.\n\n" +
-                                "Atenciosamente,\nEquipe UniLivros",
-                        codigo
-                ));
+                fallbackMessage.setText(criarConteudoEmailTexto(codigo));
 
                 mailSender.send(fallbackMessage);
                 logger.info("Fallback email enviado com sucesso para: {}", destinatario);
@@ -132,42 +97,138 @@ public class EmailService {
         }
     }
 
+    private String criarConteudoEmailHtml(String codigo) {
+        return String.format(
+                "<!DOCTYPE html>" +
+                        "<html lang=\"pt-BR\">" +
+                        "<head>" +
+                        "    <meta charset=\"UTF-8\">" +
+                        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                        "    <title>Código de Verificação - UniLivros</title>" +
+                        "    <style>" +
+                        "        body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #F9E7DC; }" +
+                        "        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #F6E3C7; border-radius: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }" +
+                        "        .header { background: #F9B233; color: white; padding: 30px; text-align: center; border-radius: 32px 32px 0 0; }" +
+                        "        .content { padding: 40px; }" +
+                        "        .code-container { background: white; padding: 25px; text-align: center; border-radius: 12px; margin: 30px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }" +
+                        "        .code { font-size: 32px; font-weight: bold; color: #4B2E2E; letter-spacing: 8px; }" +
+                        "        .footer { background: #4B2E2E; color: white; padding: 20px; text-align: center; border-radius: 0 0 32px 32px; font-size: 12px; }" +
+                        "        .btn { display: inline-block; background: #F9B233; color: white; padding: 12px 24px; text-decoration: none; border-radius: 16px; font-weight: bold; margin-top: 20px; }" +
+                        "        .btn:hover { background: #e6a91f; }" +
+                        "    </style>" +
+                        "</head>" +
+                        "<body>" +
+                        "    <div class=\"container\">" +
+                        "        <div class=\"header\">" +
+                        "            <h1>UniLivros</h1>" +
+                        "            <p>Sistema de Troca de Livros Universitários</p>" +
+                        "        </div>" +
+                        "        <div class=\"content\">" +
+                        "            <h2 style=\"color: #4B2E2E;\">Confirmação de Cadastro</h2>" +
+                        "            <p>Olá,</p>" +
+                        "            <p>Seu código de verificação é:</p>" +
+                        "            <div class=\"code-container\">" +
+                        "                <div class=\"code\">%s</div>" +
+                        "            </div>" +
+                        "            <p>Insira este código para confirmar seu cadastro ou redefinir sua senha.</p>" +
+                        "            <p><strong>Este código é válido por 1 hora.</strong></p>" +
+                        "            <p>Se você não solicitou este código, ignore este email.</p>" +
+                        "        </div>" +
+                        "        <div class=\"footer\">" +
+                        "            <p>© 2024 UniLivros - Todos os direitos reservados</p>" +
+                        "            <p>Este é um email automático, por favor não responda.</p>" +
+                        "        </div>" +
+                        "    </div>" +
+                        "</body>" +
+                        "</html>",
+                codigo
+        );
+    }
+
+    private String criarConteudoEmailTexto(String codigo) {
+        return String.format(
+                "UniLivros - Sistema de Troca de Livros Universitários\n\n" +
+                        "CÓDIGO DE VERIFICAÇÃO\n\n" +
+                        "Seu código de verificação é: %s\n\n" +
+                        "Insira este código para confirmar seu cadastro ou redefinir sua senha.\n\n" +
+                        "Este código é válido por 1 hora.\n\n" +
+                        "Se você não solicitou este código, ignore este email.\n\n" +
+                        "Atenciosamente,\n" +
+                        "Equipe UniLivros\n\n" +
+                        "---\n" +
+                        "© 2024 UniLivros - Todos os direitos reservados\n" +
+                        "Este é um email automático, por favor não responda.",
+                codigo
+        );
+    }
+
     private String getErrorMessage(MailException e) {
         String message = e.getMessage();
 
-        if (message.contains("535-5.7.8") || message.contains("Invalid credentials")) {
-            return "Credenciais SMTP inválidas. Use uma SENHA DE APLICATIVO do Google.";
+        if (message.contains("535") || message.contains("Invalid credentials")) {
+            return "Credenciais SMTP inválidas. Verifique sua chave API do SendGrid.";
         } else if (message.contains("Could not connect to SMTP host")) {
-            return "Não foi possível conectar ao servidor SMTP. Verifique sua conexão com a internet.";
+            return "Não foi possível conectar ao servidor SendGrid. Verifique sua conexão com a internet.";
         } else if (message.contains("Connection timed out")) {
             return "Tempo limite de conexão excedido. Verifique as configurações de firewall.";
         } else if (message.contains("Authentication Required")) {
             return "Autenticação SMTP necessária. Verifique usuário e senha.";
         } else if (message.contains("501 5.1.7")) {
             return "Endereço de email inválido.";
+        } else if (message.contains("Unauthorized")) {
+            return "Chave API do SendGrid inválida ou expirada.";
+        } else if (message.contains("Sender address not verified")) {
+            return "Email remetente não verificado no SendGrid. Verifique o email: " + senderEmail;
         }
 
-        return "Verifique as configurações SMTP. Para Gmail, use uma SENHA DE APLICATIVO (App Password).";
+        return "Erro ao enviar email. Verifique as configurações do SendGrid.";
     }
 
-    public void testarConexaoSMTP() {
+    private void enviarEmailSimulado(String destinatario, String codigo) {
+        logger.info("=== SIMULAÇÃO DE EMAIL (MODO DESENVOLVIMENTO) ===");
+        logger.info("Para: {}", destinatario);
+        logger.info("Código: {}", codigo);
+        logger.info("Remetente: {}", senderEmail);
+        logger.info("Assunto: Código de Verificação - UniLivros");
+        logger.info("Conteúdo HTML gerado com sucesso");
+        logger.info("==============================");
+
+        // Salva em arquivo para teste
         try {
-            logger.info("Testando conexão SMTP...");
-            logger.info("Host: {}", System.getProperty("mail.smtp.host"));
-            logger.info("Usuário: {}", remetente);
+            String logMessage = String.format(
+                    "[%s] Para: %s | Código: %s | Remetente: %s\n",
+                    new Date(), destinatario, codigo, senderEmail
+            );
+            java.nio.file.Files.write(
+                    java.nio.file.Paths.get("emails-simulados.log"),
+                    logMessage.getBytes(),
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.APPEND
+            );
+        } catch (java.io.IOException e) {
+            logger.error("Erro ao salvar email simulado: {}", e.getMessage());
+        }
+    }
+
+    public void testarConexaoSendGrid() {
+        try {
+            logger.info("Testando conexão com SendGrid...");
+            logger.info("Host: smtp.sendgrid.net");
+            logger.info("Usuário: {}", remetenteUsername);
+            logger.info("Email remetente: {}", senderEmail);
 
             SimpleMailMessage testMessage = new SimpleMailMessage();
-            testMessage.setFrom(remetente);
-            testMessage.setTo("teste@" + remetente.substring(remetente.indexOf('@') + 1));
-            testMessage.setSubject("Teste de Conexão SMTP");
-            testMessage.setText("Esta é uma mensagem de teste do sistema UniLivros.");
+            testMessage.setFrom(senderEmail);
+            testMessage.setTo("teste@example.com");
+            testMessage.setSubject("Teste de Conexão SendGrid - UniLivros");
+            testMessage.setText("Esta é uma mensagem de teste do sistema UniLivros usando SendGrid.");
 
             mailSender.send(testMessage);
-            logger.info("Teste de conexão SMTP bem-sucedido!");
+            logger.info("✅ Teste de conexão SendGrid bem-sucedido!");
 
         } catch (Exception e) {
-            logger.error("FALHA no teste de conexão SMTP: {}", e.getMessage(), e);
-            throw e;
+            logger.error("❌ FALHA no teste de conexão SendGrid: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha na conexão com SendGrid: " + e.getMessage(), e);
         }
     }
 }

@@ -114,6 +114,7 @@ public class AuthController {
     public ResponseEntity<ApiResponseDTO> forgotPassword(@RequestBody VerificationDTO dto) {
         try {
             logger.info("Solicitando código de recuperação para: {}", dto.getEmail());
+            logger.info("Usando serviço de email: SendGrid");
 
             Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
                     .orElseThrow(() -> new ResourceNotFoundException("Usuário", "Email", dto.getEmail()));
@@ -123,7 +124,7 @@ public class AuthController {
             usuario.setVerificationCode(codigo);
             usuarioRepository.save(usuario);
 
-            logger.info("Enviando email de recuperação para: {}", dto.getEmail());
+            logger.info("Enviando email via SendGrid para: {}", dto.getEmail());
             emailService.enviarCodigoConfirmacao(usuario.getEmail(), codigo);
 
             return ResponseEntity.ok(new ApiResponseDTO(true, "Código de recuperação enviado para seu e-mail."));
@@ -161,6 +162,27 @@ public class AuthController {
             logger.error("Erro ao verificar email: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDTO(false, "Erro ao verificar código."));
+        }
+    }
+
+    @PostMapping("/test-email")
+    public ResponseEntity<ApiResponseDTO> testEmail() {
+        try {
+            logger.info("Testando serviço de email SendGrid...");
+
+            // Testa conexão
+            emailService.testarConexaoSendGrid();
+
+            // Envia email de teste
+            String codigoTeste = "123456";
+            emailService.enviarCodigoConfirmacao("teste@souunit.com.br", codigoTeste);
+
+            return ResponseEntity.ok(new ApiResponseDTO(true, "Serviço de email testado com sucesso!"));
+
+        } catch (Exception e) {
+            logger.error("Falha no teste de email: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDTO(false, "Falha no teste de email: " + e.getMessage()));
         }
     }
 
