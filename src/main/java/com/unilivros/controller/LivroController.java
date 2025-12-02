@@ -1,6 +1,7 @@
 package com.unilivros.controller;
 
 import com.unilivros.dto.LivroDTO;
+import com.unilivros.dto.UsuarioDTO;
 import com.unilivros.model.Livro;
 import com.unilivros.service.LivroService;
 import jakarta.validation.Valid;
@@ -141,5 +142,12 @@ public class LivroController {
     public ResponseEntity<Void> deletarLivro(@PathVariable Long id) {
         livroService.deletarLivro(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/isbn/{isbn}/usuarios")
+    public ResponseEntity<List<UsuarioDTO>> listarDonosDosLivros(@PathVariable String isbn){
+        List<UsuarioDTO> usuarios = livroService.buscarDonosDosLivros(isbn);
+
+        return ResponseEntity.ok(usuarios);
     }
 }

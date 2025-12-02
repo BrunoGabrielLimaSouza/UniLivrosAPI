@@ -1,6 +1,7 @@
 package com.unilivros.service;
 
 import com.unilivros.dto.LivroDTO;
+import com.unilivros.dto.UsuarioDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
 import com.unilivros.model.Livro;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,8 +51,26 @@ public class LivroService {
                 .collect(Collectors.toList());
     }
 
+    public List<UsuarioDTO> buscarDonosDosLivros(String isbn) {
+
+        // Buscar a entidade Livro pelo ISBN
+        Livro livro = livroRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new RuntimeException("Livro com ISBN não encontrado"));
+
+        // Buscar relações UsuarioLivro pela entidade Livro
+        List<UsuarioLivro> donos = usuarioLivroRepository.findByLivro(livro);
+
+        return donos.stream()
+                .map(relacao -> new UsuarioDTO(relacao.getUsuario()))
+                .collect(Collectors.toList());
+    }
+
     private LivroDTO converterParaDTO(Livro livro) {
         return modelMapper.map(livro, LivroDTO.class);
+    }
+
+    private UsuarioDTO converterParaDTO(Usuario  usuario) {
+        return modelMapper.map(usuario, UsuarioDTO.class);
     }
 
     public LivroDTO criarLivro(LivroDTO dto) {
