@@ -1,5 +1,6 @@
 package com.unilivros.dto;
 
+import com.unilivros.model.Usuario;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 
@@ -51,7 +52,10 @@ public class UsuarioDTO {
         this.curso = curso;
         this.semestre = semestre;
     }
-    
+
+    public UsuarioDTO(Usuario usuario) {
+    }
+
     // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

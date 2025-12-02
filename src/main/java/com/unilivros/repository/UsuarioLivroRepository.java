@@ -1,5 +1,6 @@
 package com.unilivros.repository;
 
+import com.unilivros.dto.LivroDTO;
 import com.unilivros.model.Livro;
 import com.unilivros.model.Usuario;
 import com.unilivros.model.UsuarioLivro;
@@ -38,4 +39,5 @@ public interface UsuarioLivroRepository extends JpaRepository<UsuarioLivro, Long
     
     @Query("SELECT COUNT(ul) FROM UsuarioLivro ul WHERE ul.usuario = :usuario AND ul.disponivelParaTroca = true")
     Long countDisponiveisParaTrocaByUsuario(@Param("usuario") Usuario usuario);
+
 }
