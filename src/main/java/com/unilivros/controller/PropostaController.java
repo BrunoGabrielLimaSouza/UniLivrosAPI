@@ -2,11 +2,15 @@ package com.unilivros.controller;
 
 import com.unilivros.dto.PropostaDTO;
 import com.unilivros.model.Proposta;
+import com.unilivros.model.Usuario;
+import com.unilivros.repository.UsuarioRepository;
 import com.unilivros.service.PropostaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +22,9 @@ public class PropostaController {
     
     @Autowired
     private PropostaService propostaService;
+
+    @Autowired
+    private UsuarioRepository  usuarioRepository;
     
     @PostMapping
     public ResponseEntity<PropostaDTO> criarProposta(@Valid @RequestBody PropostaDTO propostaDTO) {
@@ -108,4 +115,33 @@ public class PropostaController {
         Long count = propostaService.contarPropostasPorPropostoEStatus(propostoId, status);
         return ResponseEntity.ok(count);
     }
+
+    @GetMapping("/recebidas")
+    public ResponseEntity<List<PropostaDTO>> listarPropostasRecebidas() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        List<PropostaDTO> recebidas = propostaService.buscarPropostasRecebidas(usuario.getId());
+
+        return ResponseEntity.ok(recebidas);
+    }
+
+    @GetMapping("/enviadas")
+    public ResponseEntity<List<PropostaDTO>> listarPropostasEnviadas() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        List<PropostaDTO> enviadas = propostaService.buscarPropostasEnviadas(usuario.getId());
+
+        return ResponseEntity.ok(enviadas);
+    }
+
 }
