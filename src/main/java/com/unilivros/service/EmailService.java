@@ -2,13 +2,17 @@ package com.unilivros.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException; // Importar esta exceção
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class); // Logger adicionado
 
     @Autowired
     private JavaMailSender mailSender;
@@ -22,15 +26,19 @@ public class EmailService {
             message.setFrom(remetente);
             message.setTo(destinatario);
             message.setSubject("Código de Verificação - UniLivros");
-            message.setText("Olá!\\n\\nSeu código de verificação é: " + codigo + "\\n\\nInsira este código no aplicativo para confirmar seu cadastro ou redefinir sua senha.");
+            message.setText(String.format(
+                    "Olá!\n\nSeu código de verificação é: %s\n\nInsira este código para confirmar seu cadastro ou redefinir sua senha.",
+                    codigo
+            ));
 
             mailSender.send(message);
-            System.out.println("E-mail enviado com sucesso para: " + destinatario);
+            logger.info("E-mail enviado com sucesso para: {}", destinatario);
+
         } catch (MailException e) {
-            System.err.println("Erro ao enviar e-mail: " + e.getMessage());
-            throw new RuntimeException("Falha ao enviar e-mail de confirmação. Verifique as configurações SMT P.", e);
+            logger.error("Erro ao enviar e-mail para {}: {}", destinatario, e.getMessage(), e);
+            throw new RuntimeException("Falha ao enviar e-mail de confirmação. Verifique as configurações SMTP. Se estiver usando Gmail, certifique-se de usar uma SENHA DE APLICATIVO (App Password) e não a senha de login.", e);
         } catch (Exception e) {
-            System.err.println("Erro desconhecido ao preparar ou enviar e-mail: " + e.getMessage());
+            logger.error("Erro desconhecido ao preparar ou enviar e-mail: {}", e.getMessage(), e);
             throw new RuntimeException("Erro interno no serviço de e-mail.", e);
         }
     }
