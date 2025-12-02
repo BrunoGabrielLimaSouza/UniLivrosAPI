@@ -15,10 +15,10 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String remetente;
 
+
     public void enviarCodigoConfirmacao(String destinatario, String codigo) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(remetente);
+            SimpleMailMessage message = new SimpleMailMessage();message.setFrom(remetente);
             message.setTo(destinatario);
             message.setSubject("Código de Verificação - UniLivros");
             message.setText("Olá!\n\nSeu código de verificação é: " + codigo + "\n\nInsira este código no aplicativo para confirmar seu cadastro ou redefinir sua senha.");
@@ -27,7 +27,8 @@ public class EmailService {
             System.out.println("E-mail enviado com sucesso para: " + destinatario);
         } catch (Exception e) {
             System.err.println("Erro ao enviar e-mail: " + e.getMessage());
-            // Em produção, você pode lançar uma exceção personalizada aqui
+            // CORREÇÃO: Relança uma exceção de tempo de execução para que o Controller possa retornar um erro 500
+            throw new RuntimeException("Falha ao enviar e-mail de confirmação.", e);
         }
     }
 }
