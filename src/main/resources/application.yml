@@ -15,8 +15,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
-    show-sql: ${SHOW_SQL:false}
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -26,12 +26,11 @@ spring:
   security:
     jwt:
       secret: ${JWT_SECRET:unilivros-secret-key-2024-very-secure}
-      expiration: ${JWT_EXPIRATION:86400000} # 24 horas
+      expiration: ${JWT_EXPIRATION:86400000}
 
-  # Configuração de email AUTOMÁTICA (detecta ambiente)
   mail:
-    host: ${MAIL_HOST:localhost}
-    port: ${MAIL_PORT:1025}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     protocol: smtp
@@ -39,43 +38,35 @@ spring:
     properties:
       mail:
         smtp:
-          auth: ${MAIL_SMTP_AUTH:false}
+          auth: true
           starttls:
-            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
-          connectiontimeout: ${MAIL_CONNECTION_TIMEOUT:10000}
-          timeout: ${MAIL_TIMEOUT:10000}
-          writetimeout: ${MAIL_WRITE_TIMEOUT:10000}
-          debug: ${MAIL_DEBUG:false}
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          debug: false
 
 logging:
   level:
-    com.unilivros: ${LOG_LEVEL_COM_UNILIVROS:INFO}
-    org.springframework.security: ${LOG_LEVEL_SECURITY:WARN}
-    org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:WARN}
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.mail: ${LOG_LEVEL_MAIL:DEBUG}
-  file:
-    name: logs/unilivros.log
-  pattern:
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    com.unilivros: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate. type. descriptor.sql.BasicBinder: TRACE
+    org.springframework.mail: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
 
 app:
   email:
-    sender: ${EMAIL_SENDER:suporteunilivros@gmail.com}
-    mode: ${EMAIL_MODE:auto} # auto, sendgrid, simulation, file
-
-# =============================================
-# PERFIS DE CONFIGURAÇÃO
-# =============================================
+    sender: suporteunilivros@gmail.com
+    mode: real
 
 ---
 # PERFIL: render (produção no Render)
@@ -84,97 +75,29 @@ spring:
     activate:
       on-profile: render
   mail:
-    host: smtp.sendgrid.net
-    port: 587
-    username: apikey
-    password: ${SENDGRID_API_KEY}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
-            required: true
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+            required: ${MAIL_SMTP_STARTTLS_REQUIRED:true}
+          ssl:
+            trust: ${MAIL_SSL_TRUST:smtp.gmail.com}
           connectiontimeout: 30000
           timeout: 30000
           writetimeout: 30000
 
 app:
   email:
-    mode: sendgrid
+    sender: ${EMAIL_SENDER:suporteunilivros@gmail. com}
+    mode: ${EMAIL_MODE:real}
 
 logging:
   level:
     com.unilivros: INFO
-    org.springframework.mail: WARN
-
----
-# PERFIL: dev (desenvolvimento local com MailDev)
-spring:
-  config:
-    activate:
-      on-profile: dev
-  mail:
-    host: localhost
-    port: 1025
-    properties:
-      mail:
-        smtp:
-          auth: false
-          starttls:
-            enable: false
-        debug: true
-
-app:
-  email:
-    mode: simulation
-
-logging:
-  level:
-    com.unilivros: DEBUG
     org.springframework.mail: DEBUG
-
----
-# PERFIL: simulation (apenas simulação, sem email real)
-spring:
-  config:
-    activate:
-      on-profile: simulation
-  mail:
-    host: localhost
-    port: 2525  # Porta inexistente para forçar fallback
-    properties:
-      mail:
-        smtp:
-          auth: false
-          starttls:
-            enable: false
-
-app:
-  email:
-    mode: simulation
-
----
-# PERFIL: sendgrid-ssl (SendGrid com SSL - alternativa)
-spring:
-  config:
-    activate:
-      on-profile: sendgrid-ssl
-  mail:
-    host: smtp.sendgrid.net
-    port: 465
-    username: apikey
-    password: ${SENDGRID_API_KEY}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          ssl:
-            enable: true
-          connectiontimeout: 30000
-          timeout: 30000
-          writetimeout: 30000
-
-app:
-  email:
-    mode: sendgrid
