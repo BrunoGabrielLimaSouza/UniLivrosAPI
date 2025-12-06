@@ -44,8 +44,10 @@ public class LivroDTO {
 
     public LivroDTO() {}
     
-    public LivroDTO(String titulo, String autor, String editora, Integer ano, String genero, Livro.CondicaoLivro condicao) {
+    public LivroDTO(String titulo, String googleId,
+                    String autor, String editora, Integer ano, String genero, Livro.CondicaoLivro condicao) {
         this.titulo = titulo;
+        this.googleId = googleId;
         this.autor = autor;
         this.editora = editora;
         this.ano = ano;

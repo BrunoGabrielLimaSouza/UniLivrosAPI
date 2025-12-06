@@ -77,25 +77,60 @@ public class LivroService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Livro livro = new Livro();
-        livro.setTitulo(dto.getTitulo());
-        livro.setAutor(dto.getAutor());
-        livro.setAno(dto.getAno());
-        livro.setCondicao(dto.getCondicao());
-        livro.setDescricao(dto.getDescricao());
-        livro.setIsbn(dto.getIsbn());
+        Livro livro = null;
 
-        livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() : "Não informada");
-        livro.setGenero((dto.getGenero() != null && !dto.getGenero().isEmpty()) ? dto.getGenero() : "Geral");
+        // ===== ALTERAÇÃO: Verificar se o livro já existe =====
 
-        livro = livroRepository.save(livro);
+        // 1. Tentar encontrar por ISBN (se fornecido)
+        if (dto.getIsbn() != null && ! dto.getIsbn().isEmpty()) {
+            Optional<Livro> livroExistente = livroRepository.findByIsbn(dto.getIsbn());
+            if (livroExistente.isPresent()) {
+                livro = livroExistente. get();
+                System.out.println("📚 Livro encontrado por ISBN: " + livro.getId());
+            }
+        }
 
+        // 2. Se não encontrou por ISBN, tentar por googleId (se fornecido)
+        if (livro == null && dto.getGoogleId() != null && !dto.getGoogleId().isEmpty()) {
+            List<Livro> livrosComGoogleId = livroRepository. findByGoogleId(dto. getGoogleId());
+            if (!livrosComGoogleId. isEmpty()) {
+                livro = livrosComGoogleId.get(0);
+                System.out.println("📚 Livro encontrado por GoogleId: " + livro.getId());
+            }
+        }
+
+        // 3. Se não encontrou, criar um novo livro
+        if (livro == null) {
+            livro = new Livro();
+            livro.setTitulo(dto.getTitulo());
+            livro.setAutor(dto.getAutor());
+            livro.setAno(dto.getAno());
+            livro.setCondicao(dto.getCondicao());
+            livro.setDescricao(dto.getDescricao());
+            livro.setIsbn(dto.getIsbn());
+            livro.setGoogleId(dto.getGoogleId()); // ← Adicione esta linha se tiver o campo
+            livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() : "Não informada");
+            livro. setGenero((dto.getGenero() != null && !dto.getGenero(). isEmpty()) ? dto.getGenero() : "Geral");
+
+            livro = livroRepository.save(livro);
+            System.out. println("✅ Novo livro criado: " + livro.getId());
+        }
+
+        // ===== VERIFICAR SE O USUÁRIO JÁ TEM ESTE LIVRO =====
+        boolean usuarioJaTemLivro = usuarioLivroRepository.existsByUsuarioAndLivro(usuario, livro);
+
+        if (usuarioJaTemLivro) {
+            throw new RuntimeException("Você já possui este livro na sua estante");
+        }
+
+        // ===== VINCULAR O USUÁRIO AO LIVRO =====
         UsuarioLivro vinculo = new UsuarioLivro();
         vinculo.setUsuario(usuario);
         vinculo.setLivro(livro);
-        vinculo.setDisponivelParaTroca(true); // Já entra disponível na estante
+        vinculo.setDisponivelParaTroca(true);
 
-        usuarioLivroRepository.save(vinculo);
+        usuarioLivroRepository. save(vinculo);
+        System.out.println("🔗 Vínculo criado entre usuário " + usuario.getId() + " e livro " + livro.getId());
 
         return converterParaDTO(livro);
     }

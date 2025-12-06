@@ -46,7 +46,7 @@ public class Livro {
     @Column(nullable = false)
     private String genero;
     
-    @Column(unique = true)
+    @Column(unique = false)
     private String isbn;
     
     @NotNull(message = "Condição é obrigatória")
