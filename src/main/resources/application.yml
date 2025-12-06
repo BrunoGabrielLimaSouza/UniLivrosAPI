@@ -1,16 +1,16 @@
 server:
-  port: 8088
+  port: ${PORT:8088}
   servlet:
-    context-path: /api
+    context-path: ${SERVER_CONTEXT_PATH:/api}
 
 spring:
   application:
     name: unilivros-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/unilivros
-    username: postgres
-    password: 4677
+    url: jdbc:${DATABASE_URL}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
