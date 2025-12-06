@@ -38,6 +38,7 @@ public class UsuarioDTO {
     @DecimalMin(value = "0.0", message = "Avaliação deve ser pelo menos 0.0")
     @DecimalMax(value = "5.0", message = "Avaliação deve ser no máximo 5.0")
     private Double avaliacao = 0.0;
+    private Integer totalTrocas;
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -76,8 +77,10 @@ public class UsuarioDTO {
     
     public String getCurso() { return curso; }
     public void setCurso(String curso) { this.curso = curso; }
-    
-    public Integer getSemestre() { return semestre; }
+
+    public Integer getSemestre() {
+        return null;
+    }
     public void setSemestre(Integer semestre) { this.semestre = semestre; }
     
     public Integer getXp() { return xp; }
@@ -91,4 +94,11 @@ public class UsuarioDTO {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    // Getters e Setters
+    public Double getAvaliação() { return avaliacao; }
+    public void setAvaliação(Double avaliação) { this.avaliacao = avaliação; }
+
+    public Integer getTotalTrocas() { return totalTrocas; }
+    public void setTotalTrocas(Integer totalTrocas) { this.totalTrocas = totalTrocas; }
 }

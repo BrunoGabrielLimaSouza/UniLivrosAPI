@@ -66,7 +66,7 @@ public class AuthController {
             newUser.setEmail(data.getEmail());
             newUser.setMatricula(data.getMatricula());
             newUser.setCurso(data.getCurso());
-            newUser.setSemestre(data.getSemestre() != null ? String.valueOf(data.getSemestre()) : null);
+            newUser.setSemestre(data.getSemestre());
             newUser.setSenha(encryptedPassword);
 
             newUser.setVerificationCode(codigo);

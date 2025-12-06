@@ -144,10 +144,17 @@ public class LivroController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/isbn/{isbn}/usuarios")
-    public ResponseEntity<List<UsuarioDTO>> listarDonosDosLivros(@PathVariable String isbn){
-        List<UsuarioDTO> usuarios = livroService.buscarDonosDosLivros(isbn);
+    // ===== NOVO ENDPOINT: Buscar usuários que possuem um livro do Google Books =====
+    @GetMapping("/google/{googleId}/usuarios")
+    public ResponseEntity<List<UsuarioDTO>> buscarUsuariosPorGoogleId(@PathVariable String googleId) {
+        List<UsuarioDTO> usuarios = livroService.buscarUsuariosPorGoogleId(googleId);
+        return ResponseEntity.ok(usuarios);
+    }
 
+    // Endpoint já existente para livros do backend
+    @GetMapping("/{id}/usuarios")
+    public ResponseEntity<List<UsuarioDTO>> buscarUsuariosPorLivro(@PathVariable Long id) {
+        List<UsuarioDTO> usuarios = livroService.buscarUsuariosPorLivroId(id);
         return ResponseEntity.ok(usuarios);
     }
 }
