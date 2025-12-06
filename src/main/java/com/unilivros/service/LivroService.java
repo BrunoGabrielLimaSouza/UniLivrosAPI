@@ -1,5 +1,4 @@
 package com.unilivros.service;
-
 import com.unilivros.dto.LivroDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
@@ -18,183 +17,165 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 @Transactional
 public class LivroService {
-
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private LivroRepository livroRepository;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private UsuarioLivroRepository usuarioLivroRepository;
-
-    public List<LivroDTO> buscarLivrosDoUsuario(String email) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + email));
-
-        List<UsuarioLivro> meusLivrosRelacao = usuarioLivroRepository.findByUsuario(usuario);
-
-        return meusLivrosRelacao.stream()
-                .map(relacao -> converterParaDTO(relacao.getLivro()))
-                .collect(Collectors.toList());
-    }
-
-    private LivroDTO converterParaDTO(Livro livro) {
-        return modelMapper.map(livro, LivroDTO.class);
-    }
-
-    public LivroDTO criarLivro(LivroDTO dto) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        Livro livro = new Livro();
-        livro.setTitulo(dto.getTitulo());
-        livro.setAutor(dto.getAutor());
-        livro.setAno(dto.getAno());
-        livro.setCondicao(dto.getCondicao());
-        livro.setDescricao(dto.getDescricao());
-        livro.setIsbn(dto.getIsbn());
-
-        livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() : "Não informada");
-        livro.setGenero((dto.getGenero() != null && !dto.getGenero().isEmpty()) ? dto.getGenero() : "Geral");
-
-        livro = livroRepository.save(livro);
-
-        UsuarioLivro vinculo = new UsuarioLivro();
-        vinculo.setUsuario(usuario);
-        vinculo.setLivro(livro);
-        vinculo.setDisponivelParaTroca(true); // Já entra disponível na estante
-
-        usuarioLivroRepository.save(vinculo);
-
-        return converterParaDTO(livro);
-    }
-
-    @Transactional(readOnly = true)
-    public LivroDTO buscarPorId(Long id) {
-        Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro", id));
-        return modelMapper.map(livro, LivroDTO.class);
-    }
-
-    @Transactional(readOnly = true)
-    public LivroDTO buscarPorIsbn(String isbn) {
-        Livro livro = livroRepository.findByIsbn(isbn)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro", "ISBN", isbn));
-        return modelMapper.map(livro, LivroDTO.class);
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> listarTodos() {
-        return livroRepository.findAll().stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorTitulo(String titulo) {
-        return livroRepository.findByTituloContaining(titulo).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorAutor(String autor) {
-        return livroRepository.findByAutorContaining(autor).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorGenero(String genero) {
-        return livroRepository.findByGenero(genero).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorEditora(String editora) {
-        return livroRepository.findByEditora(editora).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorAno(Integer ano) {
-        return livroRepository.findByAno(ano).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorCondicao(Livro.CondicaoLivro condicao) {
-        return livroRepository.findByCondicao(condicao).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorTermo(String termo) {
-        return livroRepository.findByTituloContainingOrAutorContainingOrGeneroContaining(termo).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<LivroDTO> buscarPorAnoEntre(Integer anoInicio, Integer anoFim) {
-        return livroRepository.findByAnoBetween(anoInicio, anoFim).stream()
-                .map(livro -> modelMapper.map(livro, LivroDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<String> listarGeneros() {
-        return livroRepository.findDistinctGeneros();
-    }
-
-    @Transactional(readOnly = true)
-    public List<String> listarEditoras() {
-        return livroRepository.findDistinctEditoras();
-    }
-
-    public LivroDTO atualizarLivro(Long id, LivroDTO livroDTO) {
-        Livro livroExistente = livroRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Livro", id));
-
-        if (livroDTO.getIsbn() != null && !livroDTO.getIsbn().isEmpty() &&
-                !livroExistente.getIsbn().equals(livroDTO.getIsbn()) &&
-                livroRepository.existsByIsbn(livroDTO.getIsbn())) {
-            throw new BusinessException("ISBN já cadastrado");
-        }
-
-        modelMapper.map(livroDTO, livroExistente);
-        livroExistente = livroRepository.save(livroExistente);
-
-        return modelMapper.map(livroExistente, LivroDTO.class);
-    }
-
-    public void deletarLivro(Long id) {
-        if (!livroRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Livro", id);
-        }
-        livroRepository.deleteById(id);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<LivroDTO> listarMaisRecentesPaginado(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Livro> livrosPage = livroRepository.findAllByOrderByCreatedAtDesc(pageable);
-        return livrosPage.map(livro -> modelMapper.map(livro, LivroDTO.class));
-    }
+@Autowired
+private ModelMapper modelMapper;
+@Autowired
+private LivroRepository livroRepository;
+@Autowired
+private UsuarioRepository usuarioRepository;
+@Autowired
+private UsuarioLivroRepository usuarioLivroRepository;
+// === INJEÇÃO DA IA AQUI ===
+@Autowired
+private IAService iaService;
+public List<LivroDTO> buscarLivrosDoUsuario(String email) {
+Usuario usuario = usuarioRepository.findByEmail(email)
+.orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + email));
+List<UsuarioLivro> meusLivrosRelacao = usuarioLivroRepository.findByUsuario(usuario);
+return meusLivrosRelacao.stream()
+.map(relacao -> converterParaDTO(relacao.getLivro()))
+.collect(Collectors.toList());
+}
+private LivroDTO converterParaDTO(Livro livro) {
+return modelMapper.map(livro, LivroDTO.class);
+}
+public LivroDTO criarLivro(LivroDTO dto) {
+String email = SecurityContextHolder.getContext().getAuthentication().getName();
+Usuario usuario = usuarioRepository.findByEmail(email)
+.orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+Livro livro = new Livro();
+livro.setTitulo(dto.getTitulo());
+livro.setAutor(dto.getAutor());
+livro.setAno(dto.getAno());
+livro.setCondicao(dto.getCondicao());
+livro.setDescricao(dto.getDescricao());
+livro.setIsbn(dto.getIsbn());
+livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() :
+"Não informada");
+livro.setGenero((dto.getGenero() != null && !dto.getGenero().isEmpty()) ? dto.getGenero()
+: "Geral");
+// === CHAMADA DA IA ===
+// A IA analisa os dados do DTO e retorna o nível (ex: "Básico", "Avançado")
+try {
+String previsaoIA = iaService.preverNivel(dto);
+livro.setNivelLeitura(previsaoIA);
+} catch (Exception e) {
+// Se a IA falhar (arquivo não encontrado, etc), o app não trava.
+System.err.println("Falha ao consultar IA: " + e.getMessage());
+livro.setNivelLeitura("Não analisado");
+}
+// =====================
+livro = livroRepository.save(livro);
+UsuarioLivro vinculo = new UsuarioLivro();
+vinculo.setUsuario(usuario);
+vinculo.setLivro(livro);
+vinculo.setDisponivelParaTroca(true); // Já entra disponível na estante
+usuarioLivroRepository.save(vinculo);
+return converterParaDTO(livro);
+}
+@Transactional(readOnly = true)
+public LivroDTO buscarPorId(Long id) {
+Livro livro = livroRepository.findById(id)
+.orElseThrow(() -> new ResourceNotFoundException("Livro", id));
+return modelMapper.map(livro, LivroDTO.class);
+}
+@Transactional(readOnly = true)
+public LivroDTO buscarPorIsbn(String isbn) {
+Livro livro = livroRepository.findByIsbn(isbn)
+.orElseThrow(() -> new ResourceNotFoundException("Livro", "ISBN", isbn));
+return modelMapper.map(livro, LivroDTO.class);
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> listarTodos() {
+return livroRepository.findAll().stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorTitulo(String titulo) {
+return livroRepository.findByTituloContaining(titulo).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorAutor(String autor) {
+return livroRepository.findByAutorContaining(autor).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorGenero(String genero) {
+return livroRepository.findByGenero(genero).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorEditora(String editora) {
+return livroRepository.findByEditora(editora).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorAno(Integer ano) {
+return livroRepository.findByAno(ano).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorCondicao(Livro.CondicaoLivro condicao) {
+return livroRepository.findByCondicao(condicao).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorTermo(String termo) {
+return
+livroRepository.findByTituloContainingOrAutorContainingOrGeneroContaining(termo).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<LivroDTO> buscarPorAnoEntre(Integer anoInicio, Integer anoFim) {
+return livroRepository.findByAnoBetween(anoInicio, anoFim).stream()
+.map(livro -> modelMapper.map(livro, LivroDTO.class))
+.collect(Collectors.toList());
+}
+@Transactional(readOnly = true)
+public List<String> listarGeneros() {
+return livroRepository.findDistinctGeneros();
+}
+@Transactional(readOnly = true)
+public List<String> listarEditoras() {
+return livroRepository.findDistinctEditoras();
+}
+public LivroDTO atualizarLivro(Long id, LivroDTO livroDTO) {
+Livro livroExistente = livroRepository.findById(id)
+.orElseThrow(() -> new ResourceNotFoundException("Livro", id));
+if (livroDTO.getIsbn() != null && !livroDTO.getIsbn().isEmpty() &&
+!livroExistente.getIsbn().equals(livroDTO.getIsbn()) &&
+livroRepository.existsByIsbn(livroDTO.getIsbn())) {
+throw new BusinessException("ISBN já cadastrado");
+}
+modelMapper.map(livroDTO, livroExistente);
+livroExistente = livroRepository.save(livroExistente);
+return modelMapper.map(livroExistente, LivroDTO.class);
+}
+public void deletarLivro(Long id) {
+if (!livroRepository.existsById(id)) {
+throw new ResourceNotFoundException("Livro", id);
+}
+livroRepository.deleteById(id);
+}
+@Transactional(readOnly = true)
+public Page<LivroDTO> listarMaisRecentesPaginado(int page, int size) {
+Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC,
+"createdAt"));
+Page<Livro> livrosPage = livroRepository.findAllByOrderByCreatedAtDesc(pageable);
+return livrosPage.map(livro -> modelMapper.map(livro, LivroDTO.class));
+}
 }
