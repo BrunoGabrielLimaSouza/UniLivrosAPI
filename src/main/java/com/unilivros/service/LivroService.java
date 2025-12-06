@@ -20,8 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -216,5 +215,76 @@ public class LivroService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Livro> livrosPage = livroRepository.findAllByOrderByCreatedAtDesc(pageable);
         return livrosPage.map(livro -> modelMapper.map(livro, LivroDTO.class));
+    }
+
+    /**
+     * Busca todos os usuários que possuem livros com o mesmo googleId
+     */
+    @Transactional(readOnly = true)
+    public List<UsuarioDTO> buscarUsuariosPorGoogleId(String googleId) {
+        // Busca todos os livros com esse googleId
+        List<Livro> livros = livroRepository.findByGoogleId(googleId);
+
+        if (livros.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Busca todos os usuários que possuem algum desses livros (sem duplicatas)
+        Set<Usuario> usuariosSet = new HashSet<>();
+        for (Livro livro : livros) {
+            List<UsuarioLivro> relacoes = usuarioLivroRepository. findByLivro(livro);
+            relacoes.forEach(rel -> {
+                if (rel.getDisponivelParaTroca()) {
+                    usuariosSet.add(rel.getUsuario());
+                }
+            });
+        }
+
+        // Converte para DTO com informações adicionais
+        return usuariosSet.stream()
+                .map(this::converterParaUsuarioDTO)
+                . collect(Collectors.toList());
+    }
+
+    /**
+     * Busca todos os usuários que possuem um livro específico do backend
+     */
+    @Transactional(readOnly = true)
+    public List<UsuarioDTO> buscarUsuariosPorLivroId(Long livroId) {
+        Livro livro = livroRepository.findById(livroId)
+                .orElseThrow(() -> new ResourceNotFoundException("Livro", livroId));
+
+        // Busca todas as relações usuário-livro para este livro
+        List<UsuarioLivro> relacoes = usuarioLivroRepository. findByLivro(livro);
+
+        // Pega apenas usuários que têm o livro disponível para troca
+        return relacoes. stream()
+                .filter(rel -> rel.getDisponivelParaTroca())
+                .map(rel -> {
+                    Usuario usuario = rel.getUsuario();
+                    UsuarioDTO dto = modelMapper.map(usuario, UsuarioDTO.class);
+
+                    // Garante que os campos extras estão preenchidos
+                    dto.setAvaliacao(usuario.getAvaliacao());
+                    dto.setTotalTrocas(usuario.getTotalTrocas());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Converte Usuario para DTO com informações extras necessárias para o frontend
+     */
+    private UsuarioDTO converterParaUsuarioDTO(Usuario usuario) {
+        UsuarioDTO dto = new UsuarioDTO();
+        dto.setId(usuario. getId());
+        dto.setNome(usuario.getNome());
+        dto.setEmail(usuario. getEmail());
+        dto.setAvaliacao(usuario.getAvaliacao());
+        dto.setTotalTrocas(usuario. getTotalTrocas());
+        dto.setCurso(usuario.getCurso());
+        dto.setSemestre(usuario.getSemestre());
+        return dto;
     }
 }

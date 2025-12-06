@@ -49,4 +49,7 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
     List<String> findDistinctEditoras();
 
     Page<Livro> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT l FROM Livro l WHERE l. googleId = :googleId")
+    List<Livro> findByGoogleId(@Param("googleId") String googleId);
 }

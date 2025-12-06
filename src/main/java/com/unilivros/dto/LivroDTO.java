@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 public class LivroDTO {
     
     private Long id;
+
+    private String googleId;
     
     @NotBlank(message = "Título é obrigatório")
     @Size(min = 1, max = 200, message = "Título deve ter entre 1 e 200 caracteres")
@@ -51,8 +53,14 @@ public class LivroDTO {
         this.condicao = condicao;
     }
 
+    public LivroDTO(Livro livro) {
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
     
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
