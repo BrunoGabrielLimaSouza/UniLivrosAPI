@@ -5,10 +5,9 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-# Limpa cache do Maven e força rebuild
-RUN mvn dependency:purge-local-repository clean package -DskipTests -U
+RUN mvn clean package -DskipTests -U
 
-RUN echo "=== JAR gerado ===" && ls -lah /app/target/*.jar
+RUN echo "=== JAR gerado ===" && ls -lah /app/target/*. jar
 
 FROM eclipse-temurin:17-jdk-jammy
 
@@ -16,6 +15,6 @@ WORKDIR /app
 
 EXPOSE 8088
 
-COPY --from=build /app/target/unilivros-api.jar app.jar/
+COPY --from=build /app/target/unilivros-api-0.0.1-SNAPSHOT.jar app.jar
 
 ENTRYPOINT ["java","-jar","app.jar"]
