@@ -177,4 +177,19 @@ public class PropostaService {
         
         return propostaRepository.countByPropostoAndStatus(proposto, status);
     }
+
+    public List<PropostaDTO> buscarPropostasRecebidas(Long usuarioId) {
+        return propostaRepository.findByProposto_Id(usuarioId)
+                .stream()
+                .map(PropostaDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<PropostaDTO> buscarPropostasEnviadas(Long usuarioId) {
+        return propostaRepository.findByProponente_Id(usuarioId)
+                .stream()
+                .map(PropostaDTO::new)
+                .collect(Collectors.toList());
+    }
+
 }

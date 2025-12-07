@@ -34,4 +34,9 @@ public interface PropostaRepository extends JpaRepository<Proposta, Long> {
     
     @Query("SELECT COUNT(p) FROM Proposta p WHERE p.proposto = :usuario AND p.status = :status")
     Long countByPropostoAndStatus(@Param("usuario") Usuario usuario, @Param("status") Proposta.StatusProposta status);
+
+    List<Proposta> findByProponente_Id(Long id);
+
+    List<Proposta> findByProposto_Id(Long id);
+
 }
