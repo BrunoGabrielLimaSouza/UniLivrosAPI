@@ -372,4 +372,50 @@ public class EmailService {
         if (str == null) return "";
         return str.length() > maxLength ?  str.substring(0, maxLength - 3) + "..." : str;
     }
+
+    public String getConfiguracaoAtual() {
+        return String.format(
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                        "📧 CONFIGURAÇÃO DE EMAIL\n" +
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                        "Host: %s\n" +
+                        "Porta: %d\n" +
+                        "Usuário: %s\n" +
+                        "Modo: %s\n" +
+                        "Remetente: %s\n" +
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                        "🌍 DETECÇÃO\n" +
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                        "SendGrid API: %s\n" +
+                        "SMTP: %s\n" +
+                        "MailDev: %s\n" +
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                mailHost, mailPort, maskEmail(mailUsername), emailMode, senderEmail,
+                isSendGridApiConfigured() ? "✅" : "❌",
+                isSmtpConfigured() ? "✅" : "❌",
+                isMailDevLocal() ? "✅" : "❌"
+        );
+    }
+
+    public void testarConexaoEmail() {
+        logger.info("🧪 TESTE DE CONEXÃO");
+        logger.info(getConfiguracaoAtual());
+
+        EmailMode mode = determineEmailMode();
+        logger. info("📮 Modo ativo: {}", mode);
+
+        switch (mode) {
+            case SENDGRID_API:
+                logger.info("✅ SendGrid API configurado e pronto");
+                break;
+            case GMAIL:
+                logger.info("✅ SMTP configurado e pronto");
+                break;
+            case SMTP_LOCAL:
+                logger.info("✅ MailDev local pronto");
+                break;
+            default:
+                logger.info("ℹ️ Modo {} ativo", mode);
+        }
+    }
 }
