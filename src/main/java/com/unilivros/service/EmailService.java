@@ -208,7 +208,10 @@ public class EmailService {
 
             String htmlContent = criarConteudoEmailHtml(codigo);
 
-            // Cria JSON manualmente (mais simples e confiável)
+            // ✅ ADICIONE ESTE LOG
+            logger. info("📧 HTML gerado (primeiros 200 chars): {}",
+                    htmlContent.substring(0, Math.min(200, htmlContent.length())));
+
             String jsonBody = String.format(
                     "{" +
                             "  \"personalizations\": [{\"to\": [{\"email\": \"%s\"}]}]," +
@@ -221,7 +224,11 @@ public class EmailService {
                     new Gson().toJson(htmlContent)
             );
 
-            request. setBody(jsonBody);
+            // ✅ ADICIONE ESTE LOG
+            logger.info("📧 JSON enviado (primeiros 300 chars): {}",
+                    jsonBody.substring(0, Math.min(300, jsonBody.length())));
+
+            request.setBody(jsonBody);
             Response response = sg.api(request);
 
             logger.info("🔍 SendGrid Response: Status {}", response.getStatusCode());
@@ -230,7 +237,7 @@ public class EmailService {
                 logger.info("✅ Email enviado com SUCESSO via SendGrid API para: {}", destinatario);
             } else {
                 logger. error("❌ Erro SendGrid API: Status {}, Body: {}",
-                        response.getStatusCode(), response. getBody());
+                        response. getStatusCode(), response.getBody());
                 throw new RuntimeException("Erro ao enviar via SendGrid API: " + response.getStatusCode());
             }
 
@@ -352,29 +359,58 @@ public class EmailService {
                         "<html lang=\"pt-BR\">" +
                         "<head>" +
                         "    <meta charset=\"UTF-8\">" +
+                        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
                         "    <title>Código de Verificação - UniLivros</title>" +
-                        "    <style>" +
-                        "        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #F9E7DC; }" +
-                        "        .container { max-width: 600px; margin: 20px auto; padding: 0; background-color: #F6E3C7; border-radius: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }" +
-                        "        . header { background: #F9B233; color: white; padding: 30px; text-align: center; border-radius: 32px 32px 0 0; }" +
-                        "        .header h1 { margin: 0; font-size: 32px; }" +
-                        "        .content { padding: 40px; }" +
-                        "        .code-container { background: white; padding: 25px; text-align: center; border-radius: 12px; margin: 30px 0; }" +
-                        "        .code { font-size: 36px; font-weight: bold; color: #F9B233; letter-spacing: 8px; }" +
-                        "        . footer { background: #4B2E2E; color: white; padding: 20px; text-align: center; border-radius: 0 0 32px 32px; font-size: 12px; }" +
-                        "    </style>" +
                         "</head>" +
-                        "<body>" +
-                        "    <div class=\"container\">" +
-                        "        <div class=\"header\"><h1>UniLivros</h1></div>" +
-                        "        <div class=\"content\">" +
-                        "            <h2>Código de Verificação</h2>" +
-                        "            <p>Seu código de verificação é:</p>" +
-                        "            <div class=\"code-container\"><div class=\"code\">%s</div></div>" +
-                        "            <p>Este código é válido por 1 hora.</p>" +
-                        "        </div>" +
-                        "        <div class=\"footer\"><p>© 2024 UniLivros</p></div>" +
-                        "    </div>" +
+                        "<body style=\"margin:0;padding:0;font-family:Arial,sans-serif;background-color:#F9E7DC;\">" +
+                        "    <table width=\"100%%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#F9E7DC;padding:20px;\">" +
+                        "        <tr>" +
+                        "            <td align=\"center\">" +
+                        "                <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#F6E3C7;border-radius:32px;box-shadow:0 4px 24px rgba(0,0,0,0.1);\">" +
+                        "                    <!-- Header -->" +
+                        "                    <tr>" +
+                        "                        <td style=\"background:#F9B233;color:white;padding:30px;text-align:center;border-radius:32px 32px 0 0;\">" +
+                        "                            <h1 style=\"margin:0;font-size:32px;\">📚 UniLivros</h1>" +
+                        "                            <p style=\"margin:5px 0 0 0;font-size:14px;\">Sistema de Troca de Livros Universitários</p>" +
+                        "                        </td>" +
+                        "                    </tr>" +
+                        "                    <!-- Content -->" +
+                        "                    <tr>" +
+                        "                        <td style=\"padding:40px;\">" +
+                        "                            <h2 style=\"color:#4B2E2E;margin-top:0;\">Confirmação de Cadastro</h2>" +
+                        "                            <p style=\"color:#333;line-height:1.6;\">Olá,</p>" +
+                        "                            <p style=\"color:#333;line-height:1.6;\">Seu código de verificação é:</p>" +
+                        "                            <!-- Code Box -->" +
+                        "                            <table width=\"100%%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:30px 0;\">" +
+                        "                                <tr>" +
+                        "                                    <td style=\"background:white;padding:25px;text-align:center;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);\">" +
+                        "                                        <div style=\"font-size:36px;font-weight:bold;color:#F9B233;letter-spacing:8px;\">%s</div>" +
+                        "                                    </td>" +
+                        "                                </tr>" +
+                        "                            </table>" +
+                        "                            <p style=\"color:#333;line-height:1.6;\">Insira este código no aplicativo para confirmar seu cadastro ou redefinir sua senha.</p>" +
+                        "                            <!-- Warning Box -->" +
+                        "                            <table width=\"100%%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:20px 0;\">" +
+                        "                                <tr>" +
+                        "                                    <td style=\"background:#FFF3CD;border-left:4px solid #F9B233;padding:15px;border-radius:8px;\">" +
+                        "                                        <p style=\"margin:0;color:#856404;\"><strong>⚠️ Importante:</strong> Este código é válido por 1 hora.</p>" +
+                        "                                    </td>" +
+                        "                                </tr>" +
+                        "                            </table>" +
+                        "                            <p style=\"color:#666;line-height:1.6;font-size:14px;\">Se você não solicitou este código, ignore este email.</p>" +
+                        "                        </td>" +
+                        "                    </tr>" +
+                        "                    <!-- Footer -->" +
+                        "                    <tr>" +
+                        "                        <td style=\"background:#4B2E2E;color:white;padding:20px;text-align:center;border-radius:0 0 32px 32px;\">" +
+                        "                            <p style=\"margin:5px 0;font-size:12px;\">© 2024 UniLivros - Todos os direitos reservados</p>" +
+                        "                            <p style=\"margin:5px 0;font-size:12px;\">Este é um email automático, por favor não responda. </p>" +
+                        "                        </td>" +
+                        "                    </tr>" +
+                        "                </table>" +
+                        "            </td>" +
+                        "        </tr>" +
+                        "    </table>" +
                         "</body>" +
                         "</html>",
                 codigo
