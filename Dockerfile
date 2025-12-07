@@ -2,8 +2,6 @@ FROM maven:3.8.5-openjdk-17 AS build
 
 WORKDIR /app
 
-
-# ✅ Copie apenas o necessário
 COPY pom.xml .
 COPY src ./src
 
@@ -16,6 +14,6 @@ WORKDIR /app
 
 EXPOSE 8088
 
-COPY --from=build /app/target/unilivros-api-0. 0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/unilivros-api-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app. jar"]
