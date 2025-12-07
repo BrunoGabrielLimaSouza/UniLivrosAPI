@@ -38,7 +38,7 @@ public class EmailService {
     @Value("${spring.mail.host:localhost}")
     private String mailHost;
 
-    @Value("${spring. mail.port:1025}")
+    @Value("${spring. mail.port:2525}")
     private int mailPort;
 
     @Value("${spring.mail.username:}")
@@ -50,7 +50,7 @@ public class EmailService {
     @Value("${app.email.sender:suporteunilivros@gmail.com}")
     private String senderEmail;
 
-    @Value("${app. email.mode:simulation}")
+    @Value("${app. email.mode:real}")
     private String emailMode;
 
     @PostConstruct
