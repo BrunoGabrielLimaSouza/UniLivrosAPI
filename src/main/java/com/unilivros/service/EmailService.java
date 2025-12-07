@@ -161,13 +161,13 @@ public class EmailService {
 
     private boolean isSmtpConfigured() {
         // Detecta Gmail
-        boolean isGmail = "smtp.gmail. com".equalsIgnoreCase(mailHost)
+        boolean isGmail = "smtp.gmail.com".equalsIgnoreCase(mailHost)
                 && mailPort == 587
                 && StringUtils.hasText(mailUsername)
                 && !"apikey".equals(mailUsername);
 
         // Detecta SendGrid
-        boolean isSendGrid = "smtp.sendgrid. net".equalsIgnoreCase(mailHost)
+        boolean isSendGrid = "smtp.sendgrid.net".equalsIgnoreCase(mailHost)
                 && mailPort == 587
                 && "apikey".equals(mailUsername);
 
