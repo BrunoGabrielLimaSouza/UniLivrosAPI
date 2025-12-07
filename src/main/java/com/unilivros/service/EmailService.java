@@ -64,9 +64,6 @@ public class EmailService {
         EmailMode mode = determineEmailMode();
 
         switch (mode) {
-            case SENDGRID:
-                enviarComSendGrid(destinatario, codigo);
-                break;
             case SMTP_LOCAL:
                 enviarComSmtpLocal(destinatario, codigo);
                 break;
@@ -82,7 +79,6 @@ public class EmailService {
     }
 
     private enum EmailMode {
-        SENDGRID,
         SMTP_LOCAL,
         SIMULATION,
         FILE_LOG
@@ -92,14 +88,9 @@ public class EmailService {
         // Verifica se estamos no Render (produção)
         if (isRunningOnRender()) {
             logger.info("Rodando no Render, usando SendGrid");
-            return EmailMode.SENDGRID;
+            return EmailMode.SMTP_LOCAL;
         }
 
-        // Verifica se temos configuração de SendGrid válida
-        if (mailHost.contains("sendgrid.net") && isSendGridConfigured()) {
-            logger.info("SendGrid configurado, tentando usar");
-            return EmailMode.SENDGRID;
-        }
 
         // Verifica se podemos conectar ao SMTP local
         if (mailHost.equals("localhost") && mailPort == 1025) {
@@ -120,7 +111,7 @@ public class EmailService {
 
         if (emailMode.equalsIgnoreCase("sendgrid")) {
             logger.info("Usando SendGrid (forçado)");
-            return EmailMode.SENDGRID;
+            return EmailMode.SMTP_LOCAL;
         }
 
         // Modo de simulação para desenvolvimento
@@ -384,9 +375,6 @@ public class EmailService {
             logger.info("Modo detectado: {}", mode);
 
             switch (mode) {
-                case SENDGRID:
-                    testarSendGrid();
-                    break;
                 case SMTP_LOCAL:
                     testarSmtpLocal();
                     break;
