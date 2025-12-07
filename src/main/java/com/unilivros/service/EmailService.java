@@ -122,28 +122,36 @@ public class EmailService {
     }
 
     private EmailMode determineEmailMode() {
+        logger.info("🔍 Determinando modo de email.. .");
+        logger.info("🔍 emailMode configurado: '{}'", emailMode);
+
         // Modo explícito configurado
         if ("simulation".equalsIgnoreCase(emailMode)) {
-            logger.info("✅ Modo simulação (configurado)");
+            logger.info("✅ Modo simulação (configurado explicitamente)");
             return EmailMode.SIMULATION;
         }
 
         if ("file".equalsIgnoreCase(emailMode)) {
-            logger.info("✅ Modo arquivo (configurado)");
+            logger.info("✅ Modo arquivo (configurado explicitamente)");
             return EmailMode.FILE_LOG;
         }
 
-        // Detecta Gmail ou SendGrid
-        if (isSmtpConfigured()) {
-            String service = mailHost.contains("sendgrid") ? "SendGrid" : "Gmail";
-            logger. info("✅ {} configurado - usando {}", service, service);
-            return EmailMode.GMAIL;
-        }
+        // Modo "real" ou "auto" → detecta automaticamente
+        if ("real".equalsIgnoreCase(emailMode) || "auto".equalsIgnoreCase(emailMode)) {
+            logger.info("🔍 Modo real/auto - detectando servidor SMTP.. .");
 
-        // SMTP local (MailDev)
-        if (isMailDevLocal()) {
-            logger.info("✅ MailDev local detectado");
-            return EmailMode. SMTP_LOCAL;
+            // Detecta Gmail ou SendGrid
+            if (isSmtpConfigured()) {
+                String service = mailHost.contains("sendgrid") ? "SendGrid" : "Gmail";
+                logger.info("✅ {} configurado - usando {}", service, service);
+                return EmailMode.GMAIL;
+            }
+
+            // SMTP local (MailDev)
+            if (isMailDevLocal()) {
+                logger.info("✅ MailDev local detectado");
+                return EmailMode. SMTP_LOCAL;
+            }
         }
 
         // Fallback para simulação
