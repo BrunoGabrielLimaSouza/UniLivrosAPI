@@ -166,9 +166,9 @@ public class EmailService {
                 && StringUtils.hasText(mailUsername)
                 && !"apikey".equals(mailUsername);
 
-        // Detecta SendGrid
-        boolean isSendGrid = "smtp.sendgrid.net".equalsIgnoreCase(mailHost)
-                && mailPort == 587
+        // Detecta SendGrid (aceita porta 587, 2525 ou 465)
+        boolean isSendGrid = "smtp.sendgrid. net".equalsIgnoreCase(mailHost)
+                && (mailPort == 587 || mailPort == 2525 || mailPort == 465)  // ← MUDANÇA AQUI
                 && "apikey".equals(mailUsername);
 
         boolean isConfigured = isGmail || isSendGrid;
