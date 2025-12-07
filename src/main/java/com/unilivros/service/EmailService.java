@@ -30,22 +30,22 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring. mail.host}")
+    @Value("${spring.mail.host:localhost}")
     private String mailHost;
 
-    @Value("${spring. mail.port}")
+    @Value("${spring.mail.port:1025}")
     private int mailPort;
 
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
-    @Value("${spring. mail.properties.mail.debug:false}")
+    @Value("${spring.mail.properties.mail.debug:false}")
     private boolean debugMode;
 
     @Value("${app.email.sender:suporteunilivros@gmail.com}")
     private String senderEmail;
 
-    @Value("${app. email.mode:auto}")
+    @Value("${app.email.mode:simulation}")
     private String emailMode;
 
     public void enviarCodigoConfirmacao(String destinatario, String codigo) {
