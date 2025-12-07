@@ -99,7 +99,7 @@ public class EmailService {
         // Modo explícito configurado
         if ("simulation".equalsIgnoreCase(emailMode)) {
             logger.info("✅ Modo simulação (configurado)");
-            return EmailMode. SIMULATION;
+            return EmailMode.SIMULATION;
         }
 
         if ("file".equalsIgnoreCase(emailMode)) {
@@ -107,33 +107,42 @@ public class EmailService {
             return EmailMode.FILE_LOG;
         }
 
-        // Detecta Gmail (produção ou local)
+        // Detecta Gmail ou SendGrid
         if (isSmtpConfigured()) {
-            logger.info("✅ Gmail configurado - usando Gmail");
-            return EmailMode. GMAIL;
+            String service = mailHost.contains("sendgrid") ? "SendGrid" : "Gmail";
+            logger. info("✅ {} configurado - usando {}", service, service);
+            return EmailMode.GMAIL;
         }
 
         // SMTP local (MailDev)
         if (isMailDevLocal()) {
             logger.info("✅ MailDev local detectado");
-            return EmailMode.SMTP_LOCAL;
+            return EmailMode. SMTP_LOCAL;
         }
 
         // Fallback para simulação
-        logger. info("⚠️ Nenhuma configuração detectada - usando simulação");
-        return EmailMode.SIMULATION;
+        logger.info("⚠️ Nenhuma configuração detectada - usando simulação");
+        return EmailMode. SIMULATION;
     }
 
     private boolean isSmtpConfigured() {
-        boolean isGmail = "smtp.gmail.com".equalsIgnoreCase(mailHost)
+        // Detecta Gmail
+        boolean isGmail = "smtp.gmail. com".equalsIgnoreCase(mailHost)
                 && mailPort == 587
                 && StringUtils.hasText(mailUsername)
                 && !"apikey".equals(mailUsername);
 
-        logger.debug("Gmail configurado?  Host={}, Port={}, User={}, Resultado={}",
-                mailHost, mailPort, maskEmail(mailUsername), isGmail);
+        // Detecta SendGrid
+        boolean isSendGrid = "smtp.sendgrid. net".equalsIgnoreCase(mailHost)
+                && mailPort == 587
+                && "apikey".equals(mailUsername);
 
-        return isGmail;
+        boolean isConfigured = isGmail || isSendGrid;
+
+        logger. debug("SMTP configurado? Host={}, Port={}, User={}, Gmail={}, SendGrid={}, Resultado={}",
+                mailHost, mailPort, maskEmail(mailUsername), isGmail, isSendGrid, isConfigured);
+
+        return isConfigured;
     }
 
     private boolean isMailDevLocal() {
