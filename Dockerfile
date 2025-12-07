@@ -7,7 +7,7 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests -U
 
-RUN echo "=== JAR gerado ===" && ls -lah /app/target/*. jar
+RUN echo "=== JAR gerado ===" && ls -lah /app/target/*.jar
 
 FROM eclipse-temurin:17-jdk-jammy
 
