@@ -108,7 +108,7 @@ public class EmailService {
         }
 
         // Detecta Gmail (produção ou local)
-        if (isGmailConfigured()) {
+        if (isSmtpConfigured()) {
             logger.info("✅ Gmail configurado - usando Gmail");
             return EmailMode. GMAIL;
         }
@@ -124,7 +124,7 @@ public class EmailService {
         return EmailMode.SIMULATION;
     }
 
-    private boolean isGmailConfigured() {
+    private boolean isSmtpConfigured() {
         boolean isGmail = "smtp.gmail.com".equalsIgnoreCase(mailHost)
                 && mailPort == 587
                 && StringUtils.hasText(mailUsername)
@@ -333,7 +333,7 @@ public class EmailService {
                         "Render: %s\n" +
                         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
                 mailHost, mailPort, maskEmail(mailUsername), emailMode, senderEmail,
-                isGmailConfigured() ? "✅" : "❌",
+                isSmtpConfigured() ? "✅" : "❌",
                 isMailDevLocal() ? "✅" : "❌",
                 System.getenv("RENDER") != null ? "✅" : "❌"
         );
