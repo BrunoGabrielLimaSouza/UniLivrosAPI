@@ -5,6 +5,7 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.google.gson.Gson;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -51,6 +52,25 @@ public class EmailService {
 
     @Value("${app. email.mode:simulation}")
     private String emailMode;
+
+    @PostConstruct
+    public void init() {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger. info("📧 EMAIL SERVICE INICIALIZADO");
+        logger. info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("mailHost: '{}'", mailHost);
+        logger. info("mailPort: {}", mailPort);
+        logger.info("mailUsername: '{}'", mailUsername);
+        logger.info("emailMode: '{}'", emailMode);
+        logger.info("senderEmail: '{}'", senderEmail);
+
+        String apiKey = System.getenv("SENDGRID_API_KEY");
+        logger.info("SENDGRID_API_KEY presente? {}", apiKey != null && !apiKey.isEmpty());
+        if (apiKey != null) {
+            logger.info("SENDGRID_API_KEY começa com 'SG.'?  {}", apiKey.startsWith("SG."));
+        }
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
 
     public void enviarCodigoConfirmacao(String destinatario, String codigo) {
         if (!StringUtils.hasText(destinatario)) {
