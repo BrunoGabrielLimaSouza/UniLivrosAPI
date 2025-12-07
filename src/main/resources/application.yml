@@ -30,7 +30,7 @@ spring:
 
   mail:
     host: ${MAIL_HOST:smtp.sendgrid.net}
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:2525}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     protocol: smtp
@@ -76,7 +76,7 @@ spring:
       on-profile: render
   mail:
     host: smtp.sendgrid.net
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:2525}
     username: apikey
     password: ${MAIL_PASSWORD}
     properties:
