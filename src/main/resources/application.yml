@@ -75,9 +75,9 @@ spring:
     activate:
       on-profile: render
   mail:
-    host: ${MAIL_HOST:smtp.sendgrid.net}
+    host: smtp.sendgrid.net
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
+    username: apikey
     password: ${MAIL_PASSWORD}
     properties:
       mail:
@@ -87,7 +87,7 @@ spring:
             enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
             required: ${MAIL_SMTP_STARTTLS_REQUIRED:true}
           ssl:
-            trust: ${MAIL_SSL_TRUST:smtp.sendgrid.net}
+            trust: smtp.sendgrid.net
           connectiontimeout: 30000
           timeout: 30000
           writetimeout: 30000
