@@ -5,11 +5,10 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn clean package -DskipTests
+# Limpa cache do Maven e força rebuild
+RUN mvn dependency:purge-local-repository clean package -DskipTests -U
 
-RUN echo "=== Listando arquivos gerados ===" && ls -lah /app/target/
-
-RUN echo "=== Verificando JAR ===" && ls -lah /app/target/*.jar || echo "NENHUM JAR ENCONTRADO!"
+RUN echo "=== JAR gerado ===" && ls -lah /app/target/*.jar
 
 FROM eclipse-temurin:17-jdk-jammy
 
@@ -17,10 +16,6 @@ WORKDIR /app
 
 EXPOSE 8088
 
-COPY --from=build /app/target/*.jar app.jar
-
-RUN echo "=== Verificando JAR copiado ===" && ls -lah app.jar
-
-RUN echo "=== Testando integridade do JAR ===" && jar tf app.jar | head -20
+COPY --from=build /app/target/unilivros-api.jar app.jar/
 
 ENTRYPOINT ["java","-jar","app.jar"]

@@ -1,14 +1,16 @@
 target/
 # Maven
 target/
-! . mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 
 # Build artifacts
-*. jar
+*.jar
 *.war
 *.ear
 
 # Logs
 logs/
-*. log
+*.log
 
+target/
+*.jar
