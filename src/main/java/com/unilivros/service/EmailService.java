@@ -57,12 +57,38 @@ public class EmailService {
             throw new IllegalArgumentException("Código não pode ser vazio");
         }
 
+        // ===== LOG DE DEBUG COMPLETO =====
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔍 DEBUG COMPLETO - CONFIGURAÇÃO");
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("mailHost: '{}'", mailHost);
+        logger.info("mailPort: {}", mailPort);
+        logger.info("mailUsername: '{}'", mailUsername);
+        logger.info("mailUsername vazio? {}", ! StringUtils.hasText(mailUsername));
+        logger.info("mailUsername == 'apikey'? {}", "apikey".equals(mailUsername));
+        logger.info("emailMode: '{}'", emailMode);
+        logger.info("senderEmail: '{}'", senderEmail);
+
+        // Testa condições SendGrid
+        boolean hostOk = "smtp.sendgrid.net".equalsIgnoreCase(mailHost);
+        boolean portOk = mailPort == 587;
+        boolean userOk = "apikey".equals(mailUsername);
+
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("VALIDAÇÃO SENDGRID:");
+        logger.info("  Host correto?  {} (esperado: smtp.sendgrid. net, atual: {})", hostOk, mailHost);
+        logger.info("  Porta correta? {} (esperado: 587, atual: {})", portOk, mailPort);
+        logger.info("  Username correto? {} (esperado: apikey, atual: '{}')", userOk, mailUsername);
+        logger.info("  TODAS OK? {}", hostOk && portOk && userOk);
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        // ==================================
+
         logger.info("📧 Enviando código de confirmação para: {}", destinatario);
         logger.info("🔧 Modo: {}, Host: {}:{}", emailMode, mailHost, mailPort);
 
         // Determina o modo de operação
         EmailMode mode = determineEmailMode();
-        logger. info("📮 Modo detectado: {}", mode);
+        logger.info("📮 Modo detectado: {}", mode);
 
         try {
             switch (mode) {
