@@ -29,9 +29,9 @@ spring:
       expiration: ${JWT_EXPIRATION:86400000}
 
   mail:
-    host: ${MAIL_HOST:smtp.sendgrid.net}
-    port: ${MAIL_PORT:2525}
-    username: ${MAIL_USERNAME:}
+    host: smtp.sendgrid.net
+    port: 2525
+    username: apikey
     password: ${MAIL_PASSWORD:}
     protocol: smtp
     default-encoding: UTF-8
@@ -51,11 +51,11 @@ spring:
 
 logging:
   level:
-    com.unilivros: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate. type. descriptor.sql.BasicBinder: TRACE
-    org.springframework.mail: DEBUG
+    com.unilivros: INFO
+    org.springframework.security: INFO
+    org.hibernate. SQL: DEBUG
+    org.hibernate.type. descriptor.sql.BasicBinder: TRACE
+    org.springframework. mail: DEBUG
 
 management:
   endpoints:
@@ -76,26 +76,26 @@ spring:
       on-profile: render
   mail:
     host: smtp.sendgrid.net
-    port: ${MAIL_PORT:2525}
+    port: 2525
     username: apikey
     password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: ${MAIL_SMTP_AUTH:true}
+          auth: true
           starttls:
-            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
-            required: ${MAIL_SMTP_STARTTLS_REQUIRED:true}
+            enable: true
+            required: true
           ssl:
-            trust: smtp.sendgrid.net
+            trust: smtp. sendgrid.net
           connectiontimeout: 30000
           timeout: 30000
           writetimeout: 30000
 
 app:
   email:
-    sender: ${EMAIL_SENDER:suporteunilivros@gmail. com}
-    mode: ${EMAIL_MODE:real}
+    sender: suporteunilivros@gmail.com
+    mode: real
 
 logging:
   level:
