@@ -1,9 +1,9 @@
 package com.unilivros.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints. NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations. UpdateTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class Proposta {
     @Column(name = "data_resposta")
     private LocalDateTime dataResposta;
 
-    // ✅ CAMPOS DO AGENDAMENTO (agora na Proposta)
+    // ✅ Dados do agendamento/troca
     @Column(name = "data_hora_sugerida")
     private LocalDateTime dataHoraSugerida;
 
@@ -54,8 +54,9 @@ public class Proposta {
     @OneToMany(mappedBy = "proposta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LivroProposta> livros = new ArrayList<>();
 
+    // ✅ Relacionamento direto com Troca
     @OneToOne(mappedBy = "proposta", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Agendamento agendamento;
+    private Troca troca;
 
     public Proposta() {}
 
@@ -90,16 +91,16 @@ public class Proposta {
     public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
 
     public Usuario getProponente() { return proponente; }
-    public void setProponente(Usuario proponente) { this. proponente = proponente; }
+    public void setProponente(Usuario proponente) { this.proponente = proponente; }
 
     public Usuario getProposto() { return proposto; }
-    public void setProposto(Usuario proposto) { this. proposto = proposto; }
+    public void setProposto(Usuario proposto) { this.proposto = proposto; }
 
     public List<LivroProposta> getLivros() { return livros; }
     public void setLivros(List<LivroProposta> livros) { this.livros = livros; }
 
-    public Agendamento getAgendamento() { return agendamento; }
-    public void setAgendamento(Agendamento agendamento) { this.agendamento = agendamento; }
+    public Troca getTroca() { return troca; }
+    public void setTroca(Troca troca) { this.troca = troca; }
 
     public enum StatusProposta {
         PENDENTE("Pendente"),

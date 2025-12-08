@@ -59,11 +59,11 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentos);
     }
 
-    @GetMapping("/proposta/{propostaId}")
-    public ResponseEntity<AgendamentoDTO> buscarPorProposta(@PathVariable Long propostaId) {
-        AgendamentoDTO agendamento = agendamentoService.buscarPorProposta(propostaId);
-        return ResponseEntity. ok(agendamento);
-    }
+//    @GetMapping("/proposta/{propostaId}")
+//    public ResponseEntity<AgendamentoDTO> buscarPorProposta(@PathVariable Long propostaId) {
+//        AgendamentoDTO agendamento = agendamentoService.buscarPorProposta(propostaId);
+//        return ResponseEntity. ok(agendamento);
+//    }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<AgendamentoDTO> atualizarStatus(
