@@ -79,7 +79,7 @@ public class UsuarioDTO {
     public void setCurso(String curso) { this.curso = curso; }
 
     public Integer getSemestre() {
-        return null;
+        return semestre;
     }
     public void setSemestre(Integer semestre) { this.semestre = semestre; }
     
