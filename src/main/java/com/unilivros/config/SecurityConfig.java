@@ -72,7 +72,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "https://unilivros.netlify.app",
-                "http://localhost:[*]"
+                "http://localhost:[*]",
+                "http://localhost:5173"
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

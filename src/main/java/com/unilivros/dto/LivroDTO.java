@@ -24,7 +24,7 @@ public class LivroDTO {
     
     @NotNull(message = "Ano é obrigatório")
     @Min(value = 1000, message = "Ano deve ser válido")
-    @Max(value = 2024, message = "Ano não pode ser futuro")
+    @Max(value = 2026, message = "Ano não pode ser futuro")
     private Integer ano;
     
     @NotBlank(message = "Gênero é obrigatório")
