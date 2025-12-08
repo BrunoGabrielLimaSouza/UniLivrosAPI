@@ -35,9 +35,9 @@ public class AgendamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta", agendamentoDTO.getPropostaId()));
 
         // Verificar se já existe agendamento para esta proposta
-        if (proposta.getAgendamento() != null) {
-            throw new BusinessException("Já existe um agendamento para esta proposta");
-        }
+//        if (proposta.getAgendamento() != null) {
+//            throw new BusinessException("Já existe um agendamento para esta proposta");
+//        }
 
         // Verificar se a proposta foi aceita
         if (proposta. getStatus() != Proposta.StatusProposta.ACEITA) {
@@ -170,15 +170,15 @@ public class AgendamentoService {
     }
 
     // ✅ BUSCAR AGENDAMENTO POR PROPOSTA
-    @Transactional(readOnly = true)
-    public AgendamentoDTO buscarPorProposta(Long propostaId) {
-        Proposta proposta = propostaRepository.findById(propostaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Proposta", propostaId));
-
-        if (proposta.getAgendamento() == null) {
-            throw new ResourceNotFoundException("Agendamento não encontrado para a proposta", propostaId);
-        }
-
-        return new AgendamentoDTO(proposta.getAgendamento());
-    }
+//    @Transactional(readOnly = true)
+//    public AgendamentoDTO buscarPorProposta(Long propostaId) {
+//        Proposta proposta = propostaRepository.findById(propostaId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Proposta", propostaId));
+//
+//        if (proposta.getAgendamento() == null) {
+//            throw new ResourceNotFoundException("Agendamento não encontrado para a proposta", propostaId);
+//        }
+//
+//        return new AgendamentoDTO(proposta.getAgendamento());
+//    }
 }

@@ -1,24 +1,19 @@
 package com.unilivros.service;
 
 import com.unilivros.dto.PropostaDTO;
-import com.unilivros.dto.TrocaDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
 import com.unilivros.model.*;
-import com.unilivros.repository.AgendamentoRepository;
-import com.unilivros.repository.LivroPropostaRepository;
-import com.unilivros.repository. LivroRepository;
-import com.unilivros.repository.PropostaRepository;
-import com. unilivros.repository. UsuarioRepository;
-import org. modelmapper.ModelMapper;
-import org.springframework.beans.factory. annotation.Autowired;
+import com.unilivros.repository.*;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction. annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util. List;
-import java.util. stream.Collectors;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -37,13 +32,13 @@ public class PropostaService {
     private LivroPropostaRepository livroPropostaRepository;
 
     @Autowired
-    private AgendamentoRepository agendamentoRepository;
+    private TrocaRepository trocaRepository;
+
+    @Autowired
+    private TrocaUsuarioRepository trocaUsuarioRepository;
 
     @Autowired
     private NotificacaoService notificacaoService;
-
-    @Autowired
-    private TrocaService trocaService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -56,154 +51,125 @@ public class PropostaService {
         Usuario proposto = usuarioRepository.findById(propostaDTO.getPropostoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário proposto", propostaDTO.getPropostoId()));
 
-        if (proponente.getId(). equals(proposto.getId())) {
+        if (proponente.getId().equals(proposto.getId())) {
             throw new BusinessException("Não é possível criar proposta para si mesmo");
         }
 
         Proposta proposta = new Proposta(proponente, proposto);
         proposta.setStatus(Proposta.StatusProposta.PENDENTE);
-
-        // ✅ Salvar dados do agendamento direto na proposta
         proposta.setDataHoraSugerida(propostaDTO.getDataHoraSugerida());
         proposta.setLocalSugerido(propostaDTO.getLocalSugerido());
         proposta.setObservacoes(propostaDTO.getObservacoes());
 
         proposta = propostaRepository.save(proposta);
 
-        // ✅ Salvar livros
+        // Salvar livros
         if (propostaDTO.getLivroOferecidoId() != null) {
             Livro livroOferecido = livroRepository.findById(propostaDTO.getLivroOferecidoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Livro oferecido", propostaDTO.getLivroOferecidoId()));
-
-            livroPropostaRepository.save(new LivroProposta(livroOferecido, proposta, LivroProposta.TipoLivroProposta. OFERTA));
+            livroPropostaRepository.save(new LivroProposta(livroOferecido, proposta, LivroProposta.TipoLivroProposta.OFERTA));
         }
 
         if (propostaDTO.getLivroDesejadoId() != null) {
             Livro livroDesejado = livroRepository.findById(propostaDTO.getLivroDesejadoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Livro desejado", propostaDTO.getLivroDesejadoId()));
-
             livroPropostaRepository.save(new LivroProposta(livroDesejado, proposta, LivroProposta.TipoLivroProposta.SOLICITACAO));
         }
 
-        // ✅ Criar notificação
+        // Notificação
         notificacaoService.criarNotificacao(
                 proposto.getId(),
                 "Nova proposta de troca! ",
                 proponente.getNome() + " enviou uma proposta de troca para você.",
                 Notificacao.TipoNotificacao.PROPOSTA_RECEBIDA,
-                proposta. getId(),
+                proposta.getId(),
                 null
         );
 
-        // ✅ Montar DTO de resposta
+        // Montar DTO de resposta
         PropostaDTO resultado = new PropostaDTO(proposta);
         resultado.setNomeUsuarioRelacionado(proposto.getNome());
 
         List<LivroProposta> livrosAssociados = livroPropostaRepository.findByProposta(proposta);
         for (LivroProposta lp : livrosAssociados) {
             if (lp.getTipo() == LivroProposta.TipoLivroProposta.OFERTA) {
-                resultado.setLivroOferecidoId(lp. getLivro().getId());
+                resultado.setLivroOferecidoId(lp.getLivro().getId());
                 resultado.setLivroOferecidoTitulo(lp.getLivro().getTitulo());
-            } else if (lp.getTipo() == LivroProposta.TipoLivroProposta. SOLICITACAO) {
+            } else if (lp.getTipo() == LivroProposta.TipoLivroProposta.SOLICITACAO) {
                 resultado.setLivroDesejadoId(lp.getLivro().getId());
-                resultado.setLivroDesejadoTitulo(lp. getLivro().getTitulo());
+                resultado.setLivroDesejadoTitulo(lp.getLivro().getTitulo());
             }
         }
 
         return resultado;
     }
 
-    @Transactional(readOnly = true)
-    public PropostaDTO buscarPorId(Long id) {
-        Proposta proposta = propostaRepository. findById(id)
-                . orElseThrow(() -> new ResourceNotFoundException("Proposta", id));
-        return modelMapper.map(proposta, PropostaDTO.class);
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> listarTodas() {
-        return propostaRepository.findAll().stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO. class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> buscarPorProponente(Long proponenteId) {
-        Usuario proponente = usuarioRepository. findById(proponenteId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", proponenteId));
-
-        return propostaRepository.findByProponente(proponente).stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                . collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> buscarPorProposto(Long propostoId) {
-        Usuario proposto = usuarioRepository.findById(propostoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", propostoId));
-
-        return propostaRepository.findByProposto(proposto).stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                .collect(Collectors. toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> buscarPorUsuario(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
-
-        return propostaRepository. findByUsuario(usuario).stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                .collect(Collectors. toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> buscarPorStatus(Proposta.StatusProposta status) {
-        return propostaRepository.findByStatus(status). stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<PropostaDTO> buscarPorUsuarioEStatus(Long usuarioId, Proposta.StatusProposta status) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
-
-        return propostaRepository.findByUsuarioAndStatus(usuario, status).stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                .collect(Collectors.toList());
-    }
-
+    // ✅ ACEITAR PROPOSTA - Cria Troca PENDENTE com QR Code
     public PropostaDTO aceitarProposta(Long id) {
         Proposta proposta = propostaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta", id));
 
-        if (proposta.getStatus() != Proposta.StatusProposta. PENDENTE) {
+        if (proposta.getStatus() != Proposta.StatusProposta.PENDENTE) {
             throw new BusinessException("Apenas propostas pendentes podem ser aceitas");
         }
 
         proposta.setStatus(Proposta.StatusProposta.ACEITA);
-        proposta. setDataResposta(LocalDateTime.now());
-
-        // ✅ Criar Agendamento
-        Agendamento agendamento = new Agendamento(proposta);
-        agendamento. setStatus(Agendamento.StatusAgendamento.CONFIRMADO); // Já confirmar
-        agendamento = agendamentoRepository.save(agendamento);
-
-        proposta.setAgendamento(agendamento);
+        proposta.setDataResposta(LocalDateTime.now());
         proposta = propostaRepository.save(proposta);
 
-        // ✅ Criar Troca automaticamente
-        TrocaDTO trocaDTO = new TrocaDTO();
-        trocaDTO.setAgendamentoId(agendamento.getId());
-        trocaDTO. setStatus(Troca.StatusTroca.PENDENTE);
-        trocaService.criarTroca(trocaDTO);
+        System.out.println("========================================");
+        System.out.println("✅ Proposta aceita: " + id);
+        System.out.println("👤 Proponente: " + proposta.getProponente().getNome() + " (ID: " + proposta.getProponente().getId() + ")");
+        System.out.println("👤 Proposto: " + proposta.getProposto().getNome() + " (ID: " + proposta.getProposto().getId() + ")");
+
+        // ✅ Criar Troca (status: PENDENTE) com QR Code
+        try {
+            Troca troca = new Troca(proposta);
+            troca.setStatus(Troca.StatusTroca.PENDENTE);
+
+            // Gerar QR Code único
+            String qrCode = "TROCA:" + UUID.randomUUID().toString();
+            troca.setQrCode(qrCode);
+
+            troca = trocaRepository.save(troca);
+
+            System.out.println("🔄 Troca criada: ID = " + troca.getId());
+            System.out.println("🔄 Status: PENDENTE");
+            System.out.println("📱 QR Code gerado: " + qrCode);
+
+            // Adicionar participantes
+            TrocaUsuario trocaProponente = new TrocaUsuario(
+                    proposta.getProponente(),
+                    troca,
+                    TrocaUsuario.TipoParticipacao.PARTICIPANTE
+            );
+            trocaUsuarioRepository.save(trocaProponente);
+
+            TrocaUsuario trocaProposto = new TrocaUsuario(
+                    proposta.getProposto(),
+                    troca,
+                    TrocaUsuario.TipoParticipacao.PARTICIPANTE
+            );
+            trocaUsuarioRepository.save(trocaProposto);
+
+            // Atualizar proposta com a troca
+            proposta.setTroca(troca);
+            propostaRepository.save(proposta);
+
+            System.out.println("✅ Participantes adicionados à troca");
+            System.out.println("========================================");
+
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao criar troca: " + e.getMessage());
+            e.printStackTrace();
+            throw new BusinessException("Erro ao criar troca: " + e.getMessage());
+        }
 
         // Notificação
         notificacaoService.criarNotificacao(
                 proposta.getProponente().getId(),
-                "Sua proposta foi aceita! ",
-                proposta.getProposto().getNome() + " aceitou sua proposta de troca.",
+                "Sua proposta foi aceita!",
+                proposta.getProposto().getNome() + " aceitou sua proposta. A troca foi criada! ",
                 Notificacao.TipoNotificacao.PROPOSTA_ACEITA,
                 proposta.getId(),
                 null
@@ -221,12 +187,12 @@ public class PropostaService {
             throw new BusinessException("Apenas propostas pendentes podem ser rejeitadas");
         }
 
-        proposta. setStatus(Proposta.StatusProposta.REJEITADA);
+        proposta.setStatus(Proposta.StatusProposta.REJEITADA);
         proposta.setDataResposta(LocalDateTime.now());
         proposta = propostaRepository.save(proposta);
 
         notificacaoService.criarNotificacao(
-                proposta. getProponente().getId(),
+                proposta.getProponente().getId(),
                 "Proposta rejeitada",
                 proposta.getProposto().getNome() + " rejeitou sua proposta de troca.",
                 Notificacao.TipoNotificacao.PROPOSTA_REJEITADA,
@@ -241,7 +207,7 @@ public class PropostaService {
         Proposta proposta = propostaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta", id));
 
-        if (proposta. getStatus() == Proposta.StatusProposta.CANCELADA) {
+        if (proposta.getStatus() == Proposta.StatusProposta.CANCELADA) {
             throw new BusinessException("Proposta já está cancelada");
         }
 
@@ -263,40 +229,36 @@ public class PropostaService {
     public Long contarPropostasPorProponenteEStatus(Long proponenteId, Proposta.StatusProposta status) {
         Usuario proponente = usuarioRepository.findById(proponenteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", proponenteId));
-
-        return propostaRepository. countByProponenteAndStatus(proponente, status);
+        return propostaRepository.countByProponenteAndStatus(proponente, status);
     }
 
     @Transactional(readOnly = true)
     public Long contarPropostasPorPropostoEStatus(Long propostoId, Proposta.StatusProposta status) {
         Usuario proposto = usuarioRepository.findById(propostoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", propostoId));
-
         return propostaRepository.countByPropostoAndStatus(proposto, status);
     }
 
-    // ✅ BUSCAR PROPOSTAS RECEBIDAS (COM DADOS COMPLETOS)
+    // ✅ BUSCAR PROPOSTAS RECEBIDAS
     @Transactional(readOnly = true)
     public List<PropostaDTO> buscarPropostasRecebidas(Long usuarioId) {
         return propostaRepository.findByProposto_Id(usuarioId)
                 .stream()
-                . map(proposta -> {
+                .map(proposta -> {
                     PropostaDTO dto = new PropostaDTO(proposta);
                     dto.setNomeUsuarioRelacionado(proposta.getProponente().getNome());
 
-                    // ✅ Buscar livros associados
-                    List<LivroProposta> livros = livroPropostaRepository. findByProposta(proposta);
+                    List<LivroProposta> livros = livroPropostaRepository.findByProposta(proposta);
                     for (LivroProposta lp : livros) {
-                        if (lp.getTipo() == LivroProposta.TipoLivroProposta. OFERTA) {
-                            dto.setLivroOferecidoId(lp. getLivro().getId());
+                        if (lp.getTipo() == LivroProposta.TipoLivroProposta.OFERTA) {
+                            dto.setLivroOferecidoId(lp.getLivro().getId());
                             dto.setLivroOferecidoTitulo(lp.getLivro().getTitulo());
-                        } else if (lp.getTipo() == LivroProposta. TipoLivroProposta.SOLICITACAO) {
+                        } else if (lp.getTipo() == LivroProposta.TipoLivroProposta.SOLICITACAO) {
                             dto.setLivroDesejadoId(lp.getLivro().getId());
-                            dto.setLivroDesejadoTitulo(lp.getLivro(). getTitulo());
+                            dto.setLivroDesejadoTitulo(lp.getLivro().getTitulo());
                         }
                     }
 
-                    // ✅ PREENCHER DADOS DA PROPOSTA (data, local, observações)
                     dto.setDataHoraSugerida(proposta.getDataHoraSugerida());
                     dto.setLocalSugerido(proposta.getLocalSugerido());
                     dto.setObservacoes(proposta.getObservacoes());
@@ -306,7 +268,7 @@ public class PropostaService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ BUSCAR PROPOSTAS ENVIADAS (COM DADOS COMPLETOS)
+    // ✅ BUSCAR PROPOSTAS ENVIADAS
     @Transactional(readOnly = true)
     public List<PropostaDTO> buscarPropostasEnviadas(Long usuarioId) {
         return propostaRepository.findByProponente_Id(usuarioId)
@@ -315,25 +277,80 @@ public class PropostaService {
                     PropostaDTO dto = new PropostaDTO(proposta);
                     dto.setNomeUsuarioRelacionado(proposta.getProposto().getNome());
 
-                    // ✅ Buscar livros associados
                     List<LivroProposta> livros = livroPropostaRepository.findByProposta(proposta);
                     for (LivroProposta lp : livros) {
                         if (lp.getTipo() == LivroProposta.TipoLivroProposta.OFERTA) {
-                            dto.setLivroOferecidoId(lp.getLivro(). getId());
+                            dto.setLivroOferecidoId(lp.getLivro().getId());
                             dto.setLivroOferecidoTitulo(lp.getLivro().getTitulo());
                         } else if (lp.getTipo() == LivroProposta.TipoLivroProposta.SOLICITACAO) {
                             dto.setLivroDesejadoId(lp.getLivro().getId());
-                            dto.setLivroDesejadoTitulo(lp. getLivro().getTitulo());
+                            dto.setLivroDesejadoTitulo(lp.getLivro().getTitulo());
                         }
                     }
 
-                    // ✅ PREENCHER DADOS DA PROPOSTA (data, local, observações)
                     dto.setDataHoraSugerida(proposta.getDataHoraSugerida());
                     dto.setLocalSugerido(proposta.getLocalSugerido());
                     dto.setObservacoes(proposta.getObservacoes());
 
                     return dto;
                 })
-                . collect(Collectors.toList());
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PropostaDTO buscarPorId(Long id) {
+        Proposta proposta = propostaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposta", id));
+        return modelMapper.map(proposta, PropostaDTO.class);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> listarTodas() {
+        return propostaRepository.findAll().stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> buscarPorProponente(Long proponenteId) {
+        Usuario proponente = usuarioRepository.findById(proponenteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", proponenteId));
+        return propostaRepository.findByProponente(proponente).stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> buscarPorProposto(Long propostoId) {
+        Usuario proposto = usuarioRepository.findById(propostoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", propostoId));
+        return propostaRepository.findByProposto(proposto).stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> buscarPorUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
+        return propostaRepository.findByUsuario(usuario).stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> buscarPorStatus(Proposta.StatusProposta status) {
+        return propostaRepository.findByStatus(status).stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropostaDTO> buscarPorUsuarioEStatus(Long usuarioId, Proposta.StatusProposta status) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
+        return propostaRepository.findByUsuarioAndStatus(usuario, status).stream()
+                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
+                .collect(Collectors.toList());
     }
 }
