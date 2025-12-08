@@ -8,7 +8,7 @@ import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
 import com.unilivros.model.Usuario;
 import com.unilivros.model.UsuarioLivro;
-import com.unilivros.repository.UsuarioLivroRepository; // Importante
+import com.unilivros.repository.UsuarioLivroRepository;
 import com.unilivros.repository.UsuarioRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private UsuarioLivroRepository usuarioLivroRepository; // Injete isso
+    private UsuarioLivroRepository usuarioLivroRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -44,6 +44,12 @@ public class UsuarioService {
         if (!passwordEncoder.matches(senha, usuario.getSenha())) {
             throw new BusinessException("Email ou senha inválidos");
         }
+
+
+        if (!usuario.isEnabled()) {
+            throw new BusinessException("Usuário não confirmado. Verifique seu e-mail.");
+        }
+
 
         return usuario;
     }
@@ -71,14 +77,11 @@ public class UsuarioService {
         return modelMapper.map(usuario, UsuarioDTO.class);
     }
 
-    // --- MÉTODOS ADICIONADOS PARA CORRIGIR ERROS 500 ---
-
     @Transactional(readOnly = true)
     public List<LivroDTO> buscarLivrosPorUsuarioId(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
 
-        // Busca na tabela intermediária para evitar loop infinito
         List<UsuarioLivro> relacoes = usuarioLivroRepository.findByUsuario(usuario);
 
         return relacoes.stream()
@@ -88,18 +91,13 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public List<AvaliacaoDTO> buscarAvaliacoesPorUsuarioId(Long id) {
-        // Retorna lista vazia para evitar erro 500 no front.
-        // Futuramente, implementar busca na tabela de Trocas.
         return new ArrayList<>();
     }
 
     @Transactional(readOnly = true)
     public List<ConquistaDTO> buscarConquistasPorUsuarioId(Long id) {
-        // Retorna lista vazia para evitar erro 500 no front.
         return new ArrayList<>();
     }
-
-    // ---------------------------------------------------
 
     @Transactional(readOnly = true)
     public UsuarioDTO buscarPorEmail(String email) {
@@ -107,8 +105,6 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", "email", email));
         return modelMapper.map(usuario, UsuarioDTO.class);
     }
-
-    // ... (Mantenha os outros métodos: buscarPorMatricula, listarTodos, etc.) ...
 
     @Transactional(readOnly = true)
     public UsuarioDTO buscarPorMatricula(String matricula) {

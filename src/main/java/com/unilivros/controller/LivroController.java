@@ -1,6 +1,7 @@
 package com.unilivros.controller;
 
 import com.unilivros.dto.LivroDTO;
+import com.unilivros.dto.UsuarioDTO;
 import com.unilivros.model.Livro;
 import com.unilivros.service.LivroService;
 import jakarta.validation.Valid;
@@ -141,5 +142,19 @@ public class LivroController {
     public ResponseEntity<Void> deletarLivro(@PathVariable Long id) {
         livroService.deletarLivro(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ===== NOVO ENDPOINT: Buscar usuários que possuem um livro do Google Books =====
+    @GetMapping("/google/{googleId}/usuarios")
+    public ResponseEntity<List<UsuarioDTO>> buscarUsuariosPorGoogleId(@PathVariable String googleId) {
+        List<UsuarioDTO> usuarios = livroService.buscarUsuariosPorGoogleId(googleId);
+        return ResponseEntity.ok(usuarios);
+    }
+
+    // Endpoint já existente para livros do backend
+    @GetMapping("/{id}/usuarios")
+    public ResponseEntity<List<UsuarioDTO>> buscarUsuariosPorLivro(@PathVariable Long id) {
+        List<UsuarioDTO> usuarios = livroService.buscarUsuariosPorLivroId(id);
+        return ResponseEntity.ok(usuarios);
     }
 }

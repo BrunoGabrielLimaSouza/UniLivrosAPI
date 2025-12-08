@@ -38,7 +38,7 @@ public class Usuario implements UserDetails {
     private String matricula;
 
     private String curso;
-    private String semestre;
+    private Integer semestre;
 
     @NotBlank(message = "Senha é obrigatória")
     @Column(nullable = false)
@@ -57,24 +57,23 @@ public class Usuario implements UserDetails {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // --- RELACIONAMENTOS CORRIGIDOS ---
-
-    // 1. Livros na estante (Correto)
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<UsuarioLivro> livros = new ArrayList<>();
 
-    // 2. Trocas que o usuário participa (Correto - mapeado para a tabela intermediária)
-    // Isso substitui as listas de avaliações e propostas antigas que estavam dando erro
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<TrocaUsuario> trocas = new ArrayList<>();
 
-    // ----------------------------------
+    @Column(name = "verification_code")
+    private String verificationCode;
+
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = false;
 
     public Usuario() {}
 
-    public Usuario(String nome, String email, String matricula, String curso, String semestre, String senha) {
+    public Usuario(String nome, String email, String matricula, String curso, Integer semestre, String senha) {
         this.nome = nome;
         this.email = email;
         this.matricula = matricula;
@@ -98,8 +97,8 @@ public class Usuario implements UserDetails {
     public String getCurso() { return curso; }
     public void setCurso(String curso) { this.curso = curso; }
 
-    public String getSemestre() { return semestre; }
-    public void setSemestre(String semestre) { this.semestre = semestre; }
+    public Integer getSemestre() { return semestre; }
+    public void setSemestre(Integer semestre) { this.semestre = semestre; }
 
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }
@@ -121,6 +120,11 @@ public class Usuario implements UserDetails {
 
     public List<TrocaUsuario> getTrocas() { return trocas; }
     public void setTrocas(List<TrocaUsuario> trocas) { this.trocas = trocas; }
+
+    public String getVerificationCode() { return verificationCode; }
+    public void setVerificationCode(String verificationCode) { this.verificationCode = verificationCode; }
+
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

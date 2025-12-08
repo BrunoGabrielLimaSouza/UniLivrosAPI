@@ -1,7 +1,7 @@
 server:
-  port: 8088
+  port: ${PORT:8088}
   servlet:
-    context-path: /api
+    context-path: ${SERVER_CONTEXT_PATH:/api}
 
 spring:
   application:
@@ -9,13 +9,13 @@ spring:
 
   datasource:
     url: jdbc:${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -23,20 +23,87 @@ spring:
         format_sql: true
     open-in-view: false
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
   security:
     jwt:
-      secret: unilivros-secret-key-2024-very-secure
-      expiration: 86400000 # 24 horas
+      secret: ${JWT_SECRET:unilivros-secret-key-2024-very-secure}
+      expiration: ${JWT_EXPIRATION:86400000}
+
+  mail:
+    host: smtp.sendgrid.net
+    port: 2525
+    username: apikey
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.sendgrid.net
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          debug: false
 
 logging:
   level:
-    com.unilivros: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.unilivros: INFO
+    org.springframework.security: INFO
+    org.hibernate. SQL: DEBUG
+    org.hibernate.type. descriptor.sql.BasicBinder: TRACE
+    org.springframework. mail: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+
+app:
+  email:
+    sender: suporteunilivros@gmail.com
+    mode: real
+
+---
+# PERFIL: render (produção no Render)
+spring:
+  config:
+    activate:
+      on-profile: render
+  mail:
+    host: smtp.sendgrid.net
+    port: 2525
+    username: apikey
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp. sendgrid.net
+          connectiontimeout: 30000
+          timeout: 30000
+          writetimeout: 30000
+
+app:
+  email:
+    sender: suporteunilivros@gmail.com
+    mode: real
+
+logging:
+  level:
+    com.unilivros: INFO
+    org.springframework.mail: DEBUG

@@ -18,6 +18,9 @@ public class Livro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "google_id", unique = false)
+    private String googleId;
+    
     @NotBlank(message = "Título é obrigatório")
     @Size(min = 1, max = 200, message = "Título deve ter entre 1 e 200 caracteres")
     @Column(nullable = false)
@@ -35,15 +38,15 @@ public class Livro {
 
     @NotNull(message = "Ano é obrigatório")
     @Min(value = 1000, message = "Ano deve ser válido")
-    @Max(value = 2024, message = "Ano não pode ser futuro")
+    @Max(value = 2025, message = "Ano não pode ser futuro")
     @Column(nullable = false)
     private Integer ano;
 
     @NotBlank(message = "Gênero é obrigatório")
     @Column(nullable = false)
     private String genero;
-
-    @Column(unique = true)
+    
+    @Column(unique = false)
     private String isbn;
 
     @NotNull(message = "Condição é obrigatória")
@@ -89,6 +92,9 @@ public class Livro {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+    
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
 
