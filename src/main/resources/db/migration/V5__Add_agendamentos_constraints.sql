@@ -8,7 +8,8 @@ BEGIN
         AND column_name = 'proposta_id'
         AND is_nullable = 'YES'
     ) THEN
-        -- First, ensure no NULL values exist
+        -- Delete orphaned agendamentos without proposta_id (invalid data)
+        -- These are considered invalid since agendamentos must always be linked to a proposta
         DELETE FROM agendamentos WHERE proposta_id IS NULL;
         -- Then make it NOT NULL
         ALTER TABLE agendamentos ALTER COLUMN proposta_id SET NOT NULL;
