@@ -1,14 +1,10 @@
 package com.unilivros.service;
 
 import com.unilivros.dto.PropostaDTO;
+import com.unilivros.dto.TrocaDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
-import com.unilivros.model.Agendamento;
-import com.unilivros.model.Livro;
-import com.unilivros.model.LivroProposta;
-import com. unilivros.model. Notificacao;
-import com.unilivros.model.Proposta;
-import com.unilivros.model.Usuario;
+import com.unilivros.model.*;
 import com.unilivros.repository.AgendamentoRepository;
 import com.unilivros.repository.LivroPropostaRepository;
 import com.unilivros.repository. LivroRepository;
@@ -45,6 +41,9 @@ public class PropostaService {
 
     @Autowired
     private NotificacaoService notificacaoService;
+
+    @Autowired
+    private TrocaService trocaService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -175,30 +174,35 @@ public class PropostaService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ ACEITAR PROPOSTA
     public PropostaDTO aceitarProposta(Long id) {
         Proposta proposta = propostaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta", id));
 
-        if (proposta.getStatus() != Proposta.StatusProposta.PENDENTE) {
+        if (proposta.getStatus() != Proposta.StatusProposta. PENDENTE) {
             throw new BusinessException("Apenas propostas pendentes podem ser aceitas");
         }
 
         proposta.setStatus(Proposta.StatusProposta.ACEITA);
-        proposta.setDataResposta(LocalDateTime.now());
+        proposta. setDataResposta(LocalDateTime.now());
 
         // ✅ Criar Agendamento
         Agendamento agendamento = new Agendamento(proposta);
-        agendamento.setStatus(Agendamento.StatusAgendamento.AGENDADO);
-        agendamentoRepository.save(agendamento);
+        agendamento. setStatus(Agendamento.StatusAgendamento.CONFIRMADO); // Já confirmar
+        agendamento = agendamentoRepository.save(agendamento);
 
         proposta.setAgendamento(agendamento);
         proposta = propostaRepository.save(proposta);
 
-        // ✅ Notificação
+        // ✅ Criar Troca automaticamente
+        TrocaDTO trocaDTO = new TrocaDTO();
+        trocaDTO.setAgendamentoId(agendamento.getId());
+        trocaDTO. setStatus(Troca.StatusTroca.PENDENTE);
+        trocaService.criarTroca(trocaDTO);
+
+        // Notificação
         notificacaoService.criarNotificacao(
                 proposta.getProponente().getId(),
-                "Sua proposta foi aceita!",
+                "Sua proposta foi aceita! ",
                 proposta.getProposto().getNome() + " aceitou sua proposta de troca.",
                 Notificacao.TipoNotificacao.PROPOSTA_ACEITA,
                 proposta.getId(),
