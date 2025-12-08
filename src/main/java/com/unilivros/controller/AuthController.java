@@ -3,11 +3,8 @@ package com.unilivros.controller;
 import com.unilivros.dto.AuthResponseDTO;
 import com.unilivros.dto.LoginDTO;
 import com.unilivros.dto.UsuarioDTO;
-import com.unilivros.model.Usuario;
-import com.unilivros.security.JwtTokenProvider;
 import com.unilivros.service.UsuarioService;
 import jakarta.validation.Valid;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,34 +20,15 @@ public class AuthController {
     @Autowired
     private UsuarioService usuarioService;
     
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-    
-    @Autowired
-    private ModelMapper modelMapper;
-    
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody UsuarioDTO usuarioDTO) {
-        UsuarioDTO usuarioCriado = usuarioService.criarUsuario(usuarioDTO);
-        
-        String token = tokenProvider.generateToken(usuarioCriado.getId());
-        
-        AuthResponseDTO response = new AuthResponseDTO(token, usuarioCriado);
-        
+        AuthResponseDTO response = usuarioService.register(usuarioDTO);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
     
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
-        Usuario usuario = usuarioService.authenticateUser(loginDTO.getEmail(), loginDTO.getSenha());
-        
-        String token = tokenProvider.generateToken(usuario.getId());
-        
-        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
-        usuarioDTO.setSenha(null);
-        
-        AuthResponseDTO response = new AuthResponseDTO(token, usuarioDTO);
-        
+        AuthResponseDTO response = usuarioService.login(loginDTO);
         return ResponseEntity.ok(response);
     }
     

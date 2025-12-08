@@ -11,6 +11,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,10 +59,9 @@ public class PropostaService {
     }
     
     @Transactional(readOnly = true)
-    public List<PropostaDTO> listarTodas() {
-        return propostaRepository.findAll().stream()
-                .map(proposta -> modelMapper.map(proposta, PropostaDTO.class))
-                .collect(Collectors.toList());
+    public Page<PropostaDTO> listar(Pageable pageable) {
+        Page<Proposta> page = propostaRepository.findAll(pageable);
+        return page.map(proposta -> modelMapper.map(proposta, PropostaDTO.class));
     }
     
     @Transactional(readOnly = true)

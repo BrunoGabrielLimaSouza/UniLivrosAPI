@@ -4,6 +4,8 @@ import com.unilivros.dto.AvaliacaoDTO;
 import com.unilivros.dto.ConquistaDTO;
 import com.unilivros.dto.LivroDTO;
 import com.unilivros.dto.UsuarioDTO;
+import com.unilivros.dto.AuthResponseDTO;
+import com.unilivros.dto.LoginDTO;
 import com.unilivros.exception.BusinessException;
 import com.unilivros.exception.ResourceNotFoundException;
 import com.unilivros.model.Usuario;
@@ -15,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.unilivros.security.JwtTokenProvider;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +41,9 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
     @Transactional(readOnly = true)
     public Usuario authenticateUser(String email, String senha) {
         Usuario usuario = usuarioRepository.findByEmail(email)
@@ -46,6 +54,14 @@ public class UsuarioService {
         }
 
         return usuario;
+    }
+
+    public AuthResponseDTO login(LoginDTO loginDTO) {
+        Usuario usuario = authenticateUser(loginDTO.getEmail(), loginDTO.getSenha());
+        String token = tokenProvider.generateToken(usuario.getId());
+        UsuarioDTO usuarioDTO = modelMapper.map(usuario, UsuarioDTO.class);
+        usuarioDTO.setSenha(null);
+        return new AuthResponseDTO(token, usuarioDTO);
     }
 
     public UsuarioDTO criarUsuario(UsuarioDTO usuarioDTO) {
@@ -62,6 +78,13 @@ public class UsuarioService {
         usuario = usuarioRepository.save(usuario);
 
         return modelMapper.map(usuario, UsuarioDTO.class);
+    }
+
+    public AuthResponseDTO register(UsuarioDTO usuarioDTO) {
+        UsuarioDTO usuarioCriado = criarUsuario(usuarioDTO);
+        String token = tokenProvider.generateToken(usuarioCriado.getId());
+        usuarioCriado.setSenha(null);
+        return new AuthResponseDTO(token, usuarioCriado);
     }
 
     @Transactional(readOnly = true)
@@ -122,6 +145,12 @@ public class UsuarioService {
         return usuarioRepository.findAll().stream()
                 .map(usuario -> modelMapper.map(usuario, UsuarioDTO.class))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UsuarioDTO> listar(Pageable pageable) {
+        Page<Usuario> page = usuarioRepository.findAll(pageable);
+        return page.map(usuario -> modelMapper.map(usuario, UsuarioDTO.class));
     }
 
     @Transactional(readOnly = true)

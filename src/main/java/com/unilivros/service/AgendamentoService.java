@@ -13,6 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -82,10 +84,9 @@ public class AgendamentoService {
     }
     
     @Transactional(readOnly = true)
-    public List<AgendamentoDTO> listarTodos() {
-        return agendamentoRepository.findAll().stream()
-                .map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class))
-                .collect(Collectors.toList());
+    public Page<AgendamentoDTO> listar(Pageable pageable) {
+        Page<Agendamento> page = agendamentoRepository.findAll(pageable);
+        return page.map(agendamento -> modelMapper.map(agendamento, AgendamentoDTO.class));
     }
     
     @Transactional(readOnly = true)

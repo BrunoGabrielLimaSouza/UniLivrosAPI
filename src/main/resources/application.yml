@@ -8,9 +8,9 @@ spring:
     name: unilivros-api
 
   datasource:
-    url: jdbc:${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: jdbc:postgresql://localhost:5433/unilivros
+    username: postgres
+    password: 4677
     driver-class-name: org.postgresql.Driver
 
   jpa:

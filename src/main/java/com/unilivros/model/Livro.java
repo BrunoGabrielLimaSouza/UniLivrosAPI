@@ -35,7 +35,6 @@ public class Livro {
 
     @NotNull(message = "Ano é obrigatório")
     @Min(value = 1000, message = "Ano deve ser válido")
-    @Max(value = 2024, message = "Ano não pode ser futuro")
     @Column(nullable = false)
     private Integer ano;
 

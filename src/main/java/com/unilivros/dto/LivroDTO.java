@@ -15,7 +15,6 @@ private String autor;
 private String editora;
 @NotNull(message = "Ano é obrigatório")
 @Min(value = 1000, message = "Ano deve ser válido")
-@Max(value = 2024, message = "Ano não pode ser futuro")
 private Integer ano;
 @NotBlank(message = "Gênero é obrigatório")
 private String genero;

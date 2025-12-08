@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.stream.Collectors;
 @Service
@@ -44,10 +45,13 @@ return meusLivrosRelacao.stream()
 private LivroDTO converterParaDTO(Livro livro) {
 return modelMapper.map(livro, LivroDTO.class);
 }
-public LivroDTO criarLivro(LivroDTO dto) {
-String email = SecurityContextHolder.getContext().getAuthentication().getName();
+public LivroDTO criarLivro(String email, LivroDTO dto) {
 Usuario usuario = usuarioRepository.findByEmail(email)
 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+// Validação dinâmica de ano
+if (dto.getAno() != null && dto.getAno() > java.time.Year.now().getValue()) {
+    throw new BusinessException("Ano não pode ser futuro");
+}
 Livro livro = new Livro();
 livro.setTitulo(dto.getTitulo());
 livro.setAutor(dto.getAutor());
@@ -153,9 +157,27 @@ return livroRepository.findDistinctGeneros();
 public List<String> listarEditoras() {
 return livroRepository.findDistinctEditoras();
 }
+@Transactional(readOnly = true)
+public Page<LivroDTO> listar(Pageable pageable) {
+Page<Livro> page = livroRepository.findAll(pageable);
+return page.map(livro -> modelMapper.map(livro, LivroDTO.class));
+}
+@Transactional(readOnly = true)
+public String preverNivelLeitura(LivroDTO dto) {
+try {
+String previsao = iaService.preverNivel(dto);
+return previsao;
+} catch (Exception e) {
+return "Erro na Análise";
+}
+}
 public LivroDTO atualizarLivro(Long id, LivroDTO livroDTO) {
 Livro livroExistente = livroRepository.findById(id)
 .orElseThrow(() -> new ResourceNotFoundException("Livro", id));
+ // Validação dinâmica de ano
+ if (livroDTO.getAno() != null && livroDTO.getAno() > java.time.Year.now().getValue()) {
+     throw new BusinessException("Ano não pode ser futuro");
+ }
 if (livroDTO.getIsbn() != null && !livroDTO.getIsbn().isEmpty() &&
 !livroExistente.getIsbn().equals(livroDTO.getIsbn()) &&
 livroRepository.existsByIsbn(livroDTO.getIsbn())) {

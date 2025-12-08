@@ -6,6 +6,7 @@ import com.unilivros.service.LivroService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,7 +26,9 @@ public class LivroController {
     
     @PostMapping
     public ResponseEntity<LivroDTO> criarLivro(@Valid @RequestBody LivroDTO livroDTO) {
-        LivroDTO livroCriado = livroService.criarLivro(livroDTO);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+        LivroDTO livroCriado = livroService.criarLivro(emailUsuario, livroDTO);
         return new ResponseEntity<>(livroCriado, HttpStatus.CREATED);
     }
 
@@ -127,6 +130,18 @@ public class LivroController {
 
         Page<LivroDTO> livrosRecentes = livroService.listarMaisRecentesPaginado(page, size);
         return ResponseEntity.ok(livrosRecentes);
+    }
+
+    @GetMapping("/paginado")
+    public ResponseEntity<Page<LivroDTO>> listarPaginado(Pageable pageable) {
+        Page<LivroDTO> livros = livroService.listar(pageable);
+        return ResponseEntity.ok(livros);
+    }
+
+    @PostMapping("/prever-nivel")
+    public ResponseEntity<String> preverNivelLeitura(@Valid @RequestBody LivroDTO livroDTO) {
+        String nivel = livroService.preverNivelLeitura(livroDTO);
+        return ResponseEntity.ok(nivel);
     }
     
     @PutMapping("/{id}")

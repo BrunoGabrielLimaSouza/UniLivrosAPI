@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -32,8 +34,8 @@ public class PropostaController {
     }
     
     @GetMapping
-    public ResponseEntity<List<PropostaDTO>> listarTodas() {
-        List<PropostaDTO> propostas = propostaService.listarTodas();
+    public ResponseEntity<Page<PropostaDTO>> listar(Pageable pageable) {
+        Page<PropostaDTO> propostas = propostaService.listar(pageable);
         return ResponseEntity.ok(propostas);
     }
     

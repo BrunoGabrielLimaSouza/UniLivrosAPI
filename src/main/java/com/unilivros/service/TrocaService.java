@@ -16,6 +16,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -67,10 +69,9 @@ public class TrocaService {
     }
     
     @Transactional(readOnly = true)
-    public List<TrocaDTO> listarTodas() {
-        return trocaRepository.findAll().stream()
-                .map(troca -> modelMapper.map(troca, TrocaDTO.class))
-                .collect(Collectors.toList());
+    public Page<TrocaDTO> listar(Pageable pageable) {
+        Page<Troca> page = trocaRepository.findAll(pageable);
+        return page.map(troca -> modelMapper.map(troca, TrocaDTO.class));
     }
     
     @Transactional(readOnly = true)

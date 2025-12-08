@@ -9,6 +9,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,8 +36,8 @@ public class AgendamentoController {
     }
     
     @GetMapping
-    public ResponseEntity<List<AgendamentoDTO>> listarTodos() {
-        List<AgendamentoDTO> agendamentos = agendamentoService.listarTodos();
+    public ResponseEntity<Page<AgendamentoDTO>> listar(Pageable pageable) {
+        Page<AgendamentoDTO> agendamentos = agendamentoService.listar(pageable);
         return ResponseEntity.ok(agendamentos);
     }
     
