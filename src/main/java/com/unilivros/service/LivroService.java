@@ -1,5 +1,4 @@
 package com.unilivros.service;
-
 import com.unilivros.dto.LivroDTO;
 import com.unilivros.dto.UsuarioDTO;
 import com.unilivros.exception.BusinessException;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +38,9 @@ public class LivroService {
 
     @Autowired
     private UsuarioLivroRepository usuarioLivroRepository;
+
+  @Autowired
+  private IAService iaService;
 
     public List<LivroDTO> buscarLivrosDoUsuario(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
@@ -71,6 +74,41 @@ public class LivroService {
     private UsuarioDTO converterParaDTO(Usuario  usuario) {
         return modelMapper.map(usuario, UsuarioDTO.class);
     }
+  
+  public LivroDTO criarLivroBIA(LivroDTO dto) {
+String email = SecurityContextHolder.getContext().getAuthentication().getName();
+Usuario usuario = usuarioRepository.findByEmail(email)
+.orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+Livro livro = new Livro();
+livro.setTitulo(dto.getTitulo());
+livro.setAutor(dto.getAutor());
+livro.setAno(dto.getAno());
+livro.setCondicao(dto.getCondicao());
+livro.setDescricao(dto.getDescricao());
+livro.setIsbn(dto.getIsbn());
+livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() :
+"Não informada");
+livro.setGenero((dto.getGenero() != null && !dto.getGenero().isEmpty()) ? dto.getGenero()
+: "Geral");
+// === CHAMADA DA IA ===
+// A IA analisa os dados do DTO e retorna o nível (ex: "Básico", "Avançado")
+try {
+String previsaoIA = iaService.preverNivel(dto);
+livro.setNivelLeitura(previsaoIA);
+} catch (Exception e) {
+// Se a IA falhar (arquivo não encontrado, etc), o app não trava.
+System.err.println("Falha ao consultar IA: " + e.getMessage());
+livro.setNivelLeitura("Não analisado");
+}
+// =====================
+livro = livroRepository.save(livro);
+UsuarioLivro vinculo = new UsuarioLivro();
+vinculo.setUsuario(usuario);
+vinculo.setLivro(livro);
+vinculo.setDisponivelParaTroca(true); // Já entra disponível na estante
+usuarioLivroRepository.save(vinculo);
+return converterParaDTO(livro);
+}
 
     public LivroDTO criarLivro(LivroDTO dto) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -94,6 +132,7 @@ public class LivroService {
                 System.out.println("📚 Livro encontrado por GoogleId: " + livro.getId());
             }
         }
+      
 
         if (livro == null) {
             livro = new Livro();
@@ -107,6 +146,18 @@ public class LivroService {
             livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() : "Não informada");
             livro. setGenero((dto.getGenero() != null && !dto.getGenero(). isEmpty()) ? dto.getGenero() : "Geral");
 
+                // === CHAMADA DA IA ===
+    // A IA analisa os dados do DTO e retorna o nível (ex: "Básico", "Avançado")
+    try {
+    String previsaoIA = iaService.preverNivel(dto);
+    livro.setNivelLeitura(previsaoIA);
+    } catch (Exception e) {
+    // Se a IA falhar (arquivo não encontrado, etc), o app não trava.
+    System.err.println("Falha ao consultar IA: " + e.getMessage());
+    livro.setNivelLeitura("Não analisado");
+    }
+    // =====================
+          
             livro = livroRepository.save(livro);
             System.out. println("✅ Novo livro criado: " + livro.getId());
         }

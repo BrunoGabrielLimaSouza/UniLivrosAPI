@@ -1,9 +1,7 @@
 package com.unilivros.dto;
-
 import com.unilivros.model.Livro;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
-
 public class LivroDTO {
     
     private Long id;
@@ -41,6 +39,7 @@ public class LivroDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
+    private String nivelLeitura;
 
     public LivroDTO() {}
     
@@ -93,4 +92,8 @@ public class LivroDTO {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+  
+  public String getNivelLeitura() { return nivelLeitura; }
+  public void setNivelLeitura(String nivelLeitura) { this.nivelLeitura = nivelLeitura; }
+
 }
