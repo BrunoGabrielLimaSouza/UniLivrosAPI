@@ -1,3 +1,27 @@
+-- Make old columns nullable before data migration to avoid constraint violations
+DO $$
+BEGIN
+    -- Make data_hora nullable if it exists and is NOT NULL
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'agendamentos' 
+        AND column_name = 'data_hora'
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE agendamentos ALTER COLUMN data_hora DROP NOT NULL;
+    END IF;
+
+    -- Make local nullable if it exists and is NOT NULL
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'agendamentos' 
+        AND column_name = 'local'
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE agendamentos ALTER COLUMN local DROP NOT NULL;
+    END IF;
+END $$;
+
 -- Migrate data from old agendamentos columns to propostas
 -- Only run if old columns exist in agendamentos table
 DO $$
