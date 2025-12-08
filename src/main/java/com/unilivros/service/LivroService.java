@@ -79,9 +79,6 @@ public class LivroService {
 
         Livro livro = null;
 
-        // ===== ALTERAÇÃO: Verificar se o livro já existe =====
-
-        // 1. Tentar encontrar por ISBN (se fornecido)
         if (dto.getIsbn() != null && ! dto.getIsbn().isEmpty()) {
             Optional<Livro> livroExistente = livroRepository.findByIsbn(dto.getIsbn());
             if (livroExistente.isPresent()) {
@@ -90,7 +87,6 @@ public class LivroService {
             }
         }
 
-        // 2. Se não encontrou por ISBN, tentar por googleId (se fornecido)
         if (livro == null && dto.getGoogleId() != null && !dto.getGoogleId().isEmpty()) {
             List<Livro> livrosComGoogleId = livroRepository. findByGoogleId(dto. getGoogleId());
             if (!livrosComGoogleId. isEmpty()) {
@@ -99,7 +95,6 @@ public class LivroService {
             }
         }
 
-        // 3. Se não encontrou, criar um novo livro
         if (livro == null) {
             livro = new Livro();
             livro.setTitulo(dto.getTitulo());
@@ -116,14 +111,12 @@ public class LivroService {
             System.out. println("✅ Novo livro criado: " + livro.getId());
         }
 
-        // ===== VERIFICAR SE O USUÁRIO JÁ TEM ESTE LIVRO =====
         boolean usuarioJaTemLivro = usuarioLivroRepository.existsByUsuarioAndLivro(usuario, livro);
 
         if (usuarioJaTemLivro) {
             throw new RuntimeException("Você já possui este livro na sua estante");
         }
 
-        // ===== VINCULAR O USUÁRIO AO LIVRO =====
         UsuarioLivro vinculo = new UsuarioLivro();
         vinculo.setUsuario(usuario);
         vinculo.setLivro(livro);
@@ -252,9 +245,6 @@ public class LivroService {
         return livrosPage.map(livro -> modelMapper.map(livro, LivroDTO.class));
     }
 
-    /**
-     * Busca todos os usuários que possuem livros com o mesmo googleId
-     */
     @Transactional(readOnly = true)
     public List<UsuarioDTO> buscarUsuariosPorGoogleId(String googleId) {
         // Busca todos os livros com esse googleId
@@ -281,9 +271,6 @@ public class LivroService {
                 . collect(Collectors.toList());
     }
 
-    /**
-     * Busca todos os usuários que possuem um livro específico do backend
-     */
     @Transactional(readOnly = true)
     public List<UsuarioDTO> buscarUsuariosPorLivroId(Long livroId) {
         Livro livro = livroRepository.findById(livroId)
@@ -308,9 +295,6 @@ public class LivroService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Converte Usuario para DTO com informações extras necessárias para o frontend
-     */
     private UsuarioDTO converterParaUsuarioDTO(Usuario usuario) {
         UsuarioDTO dto = new UsuarioDTO();
         dto.setId(usuario. getId());
@@ -322,4 +306,5 @@ public class LivroService {
         dto.setSemestre(usuario.getSemestre());
         return dto;
     }
+
 }
