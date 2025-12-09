@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.unilivros.controller.AuthController.logger;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
@@ -52,15 +54,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ErrorResponse error = new ErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Erro interno do servidor",
-            LocalDateTime.now()
-        );
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+//        ErrorResponse error = new ErrorResponse(
+//            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//            "Erro interno do servidor",
+//            LocalDateTime.now()
+//        );
+//        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
     
     // Classes internas para resposta de erro
     public static class ErrorResponse {
@@ -95,5 +97,19 @@ public class GlobalExceptionHandler {
         
         public Map<String, String> getErrors() { return errors; }
         public void setErrors(Map<String, String> errors) { this.errors = errors; }
+    }
+
+    /**
+     * Intercepta qualquer exceção não tratada e GARANTE o log da Stack Trace no console.
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleAllUncaughtException(Exception ex) {
+
+        // 🚨 ESTA LINHA VAI FORÇAR O LOG COMPLETO
+        logger.error("🛑 ERRO INTERNO (500) NO PROCESSO DE VERIFICAÇÃO DE EMAIL: ", ex);
+
+        // Resposta genérica para o frontend.
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Ocorreu um erro interno no servidor. Detalhes registrados no log.");
     }
 }

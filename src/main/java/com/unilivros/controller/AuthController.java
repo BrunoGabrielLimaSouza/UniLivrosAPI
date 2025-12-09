@@ -27,7 +27,7 @@ import java.util.Random;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    public static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private UsuarioService usuarioService;
@@ -150,12 +150,12 @@ public class AuthController {
     }
 
     // --- VERIFICAR CÓDIGO DE CADASTRO ---
-    @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponseDTO> verifyEmail(@RequestBody VerificationDTO dto) {
+    @PostMapping("/verify-email/{codigoVerificacao}")
+    public ResponseEntity<ApiResponseDTO> verifyEmail(@PathVariable String codigoVerificacao) {
         try {
-            logger.info("Verificando código: {}", dto.getCode());
+            logger.info("Verificando código: {}", codigoVerificacao);
 
-            Usuario usuario = usuarioRepository.findByVerificationCode(dto.getCode())
+            Usuario usuario = usuarioRepository.findByVerificationCode(codigoVerificacao)
                     .orElseThrow(() -> new BusinessException("Código de verificação inválido."));
 
             usuario.setEnabled(true);
@@ -168,9 +168,14 @@ public class AuthController {
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(new ApiResponseDTO(false, e.getMessage()));
         } catch (Exception e) {
+            // Log para o servidor (manter a stack trace completa)
             logger.error("Erro ao verificar email: ", e);
+
+            // Retorna o tipo de erro para o frontend (sem detalhes sensíveis)
+            String erroDetalhado = "Erro ao verificar código. Detalhe: " + e.getClass().getSimpleName();
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO(false, "Erro ao verificar código."));
+                    .body(new ApiResponseDTO(false, erroDetalhado));
         }
     }
 

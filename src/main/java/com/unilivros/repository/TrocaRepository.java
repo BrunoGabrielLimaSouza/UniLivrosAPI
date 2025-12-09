@@ -40,4 +40,12 @@ public interface TrocaRepository extends JpaRepository<Troca, Long> {
 
     @Query("SELECT AVG(t.avaliacao) FROM Troca t WHERE t.avaliacao IS NOT NULL")
     Double findAverageAvaliacao();
+
+    // ➕ Conta quantas trocas um usuário concluiu com sucesso
+    @Query("SELECT COUNT(t) FROM Troca t JOIN t.usuarios tu WHERE tu.usuario.id = :usuarioId AND t.status = 'CONCLUIDA'")
+    Long countConcluidasByUsuario(@Param("usuarioId") Long usuarioId);
+
+    // ➕ Calcula a média de avaliações de todas as trocas de um usuário
+    @Query("SELECT AVG(t.avaliacao) FROM Troca t JOIN t.usuarios tu WHERE tu.usuario.id = :usuarioId AND t.avaliacao IS NOT NULL AND t.status = 'CONCLUIDA'")
+    Double findAverageAvaliacaoByUsuario(@Param("usuarioId") Long usuarioId);
 }
