@@ -39,6 +39,10 @@ public class LivroService {
     @Autowired
     private UsuarioLivroRepository usuarioLivroRepository;
 
+
+    @Autowired
+    private IAService iaService;
+
     public List<LivroDTO> buscarLivrosDoUsuario(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + email));
@@ -106,6 +110,18 @@ public class LivroService {
             livro.setGoogleId(dto.getGoogleId()); // ← Adicione esta linha se tiver o campo
             livro.setEditora((dto.getEditora() != null && !dto.getEditora().isEmpty()) ? dto.getEditora() : "Não informada");
             livro. setGenero((dto.getGenero() != null && !dto.getGenero(). isEmpty()) ? dto.getGenero() : "Geral");
+
+            // === CHAMADA DA IA ===
+            // A IA analisa os dados do DTO e retorna o nível (ex: "Básico", "Avançado")
+            try {
+                String previsaoIA = iaService.preverNivel(dto);
+                livro.setNivelLeitura(previsaoIA);
+            } catch (Exception e) {
+            // Se a IA falhar (arquivo não encontrado, etc), o app não trava.
+                System.err.println("Falha ao consultar IA: " + e.getMessage());
+                livro.setNivelLeitura("Não analisado");
+            }
+            // =====================
 
             livro = livroRepository.save(livro);
             System.out. println("✅ Novo livro criado: " + livro.getId());

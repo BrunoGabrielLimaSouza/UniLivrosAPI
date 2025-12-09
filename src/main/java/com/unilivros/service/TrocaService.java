@@ -205,7 +205,19 @@ public class TrocaService {
     private TrocaDTO convertToDto(Troca troca) {
         TrocaDTO dto = modelMapper.map(troca, TrocaDTO.class);
 
-        // Lógica de mapeamento de títulos e dados da proposta (inferida pelo uso de LivroPropostaRepository)
+        // 1. Gerar a imagem do QR Code se o código existir
+        if (troca.getQrCode() != null && !troca.getQrCode().isEmpty()) {
+            try {
+                // Gera a imagem on-the-fly e define no DTO
+                String qrCodeImage = gerarQRCodeBase64(troca.getQrCode());
+                dto.setQrCodeBase64(qrCodeImage);
+            } catch (Exception e) {
+                // Log de erro silencioso para não quebrar a listagem inteira
+                System.err.println("Erro ao gerar imagem QR para a troca " + troca.getId() + ": " + e.getMessage());
+            }
+        }
+
+        // Lógica de mapeamento de títulos e dados da proposta
         if (troca.getProposta() != null) {
             dto.setPropostaId(troca.getProposta().getId());
             dto.setDataHora(troca.getProposta().getDataHoraSugerida());
