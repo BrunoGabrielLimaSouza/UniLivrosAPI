@@ -3,6 +3,7 @@ package com.unilivros.controller;
 import com.unilivros.dto.LivroDTO;
 import com.unilivros.dto.UsuarioDTO;
 import com.unilivros.model.Livro;
+import com.unilivros.service.IAService;
 import com.unilivros.service.LivroService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class LivroController {
     
     @Autowired
     private LivroService livroService;
+
+    @Autowired
+    private IAService iaService;
 
     
     @PostMapping
@@ -156,5 +160,11 @@ public class LivroController {
     public ResponseEntity<List<UsuarioDTO>> buscarUsuariosPorLivro(@PathVariable Long id) {
         List<UsuarioDTO> usuarios = livroService.buscarUsuariosPorLivroId(id);
         return ResponseEntity.ok(usuarios);
+    }
+
+    @PostMapping("/analise-ia")
+    public ResponseEntity<String> preverNivelLeitura(@RequestBody LivroDTO livroDTO) {
+        String nivel = iaService.preverNivel(livroDTO);
+        return ResponseEntity.ok(nivel);
     }
 }
