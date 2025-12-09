@@ -1,1 +1,0 @@
-ALTER TABLE livros ADD COLUMN nivel_leitura VARCHAR(255);
