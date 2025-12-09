@@ -27,7 +27,7 @@ import java.util.Random;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private UsuarioService usuarioService;

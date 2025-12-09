@@ -16,9 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.unilivros.controller.AuthController.logger;
 
 @RestController
 @RequestMapping("/trocas")
@@ -36,7 +40,19 @@ public class TrocaController {
 
     @PostMapping
     public ResponseEntity<TrocaDTO> criarTroca(@Valid @RequestBody TrocaDTO trocaDTO) {
-        TrocaDTO trocaCriada = trocaService.criarTroca(trocaDTO);
+        // Obter o ID do usuário autenticado para garantir a segurança ou registrar
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o e-mail: " + emailUsuario));
+
+        // A propostaId deve estar no DTO
+        if (trocaDTO.getPropostaId() == null) {
+            throw new BusinessException("A Proposta ID é obrigatória para criar uma troca.");
+        }
+
+        TrocaDTO trocaCriada = trocaService.criarTroca(trocaDTO.getPropostaId());
         return new ResponseEntity<>(trocaCriada, HttpStatus.CREATED);
     }
 
@@ -46,131 +62,26 @@ public class TrocaController {
         return ResponseEntity.ok(troca);
     }
 
+    @GetMapping("/minhas")
+    public ResponseEntity<List<TrocaDTO>> listarMinhasTrocas() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o e-mail: " + emailUsuario));
+
+        List<TrocaDTO> minhasTrocas = trocaService.buscarMinhasTrocas(usuario.getId());
+
+        return ResponseEntity.ok(minhasTrocas);
+    }
+
     @GetMapping
-    public ResponseEntity<List<TrocaDTO>> listarTodas() {
+    public ResponseEntity<List<TrocaDTO>> listarTodasTrocas() {
         List<TrocaDTO> trocas = trocaService.listarTodas();
         return ResponseEntity.ok(trocas);
     }
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<TrocaDTO>> buscarPorStatus(@PathVariable Troca.StatusTroca status) {
-        List<TrocaDTO> trocas = trocaService.buscarPorStatus(status);
-        return ResponseEntity.ok(trocas);
-    }
-
-    // ✅ Buscar minhas trocas
-    @GetMapping("/minhas")
-    public ResponseEntity<List<TrocaDTO>> buscarMinhasTrocas() {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String emailUsuario = authentication.getName();
-
-            System.out.println("🔍 Buscando trocas para usuário: " + emailUsuario);
-
-            Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-            System.out.println("🔍 ID do usuário: " + usuario.getId());
-
-            List<TrocaDTO> trocas = trocaService.buscarPorUsuario(usuario.getId());
-
-            System.out.println("🔍 Total de trocas encontradas: " + trocas.size());
-
-            return ResponseEntity.ok(trocas);
-        } catch (Exception e) {
-            System.err.println("❌ Erro ao buscar trocas: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<TrocaDTO>> buscarPorUsuario(@PathVariable Long usuarioId) {
-        List<TrocaDTO> trocas = trocaService.buscarPorUsuario(usuarioId);
-        return ResponseEntity.ok(trocas);
-    }
-
-    @GetMapping("/usuario/{usuarioId}/status/{status}")
-    public ResponseEntity<List<TrocaDTO>> buscarPorUsuarioEStatus(
-            @PathVariable Long usuarioId,
-            @PathVariable Troca.StatusTroca status) {
-        List<TrocaDTO> trocas = trocaService.buscarPorUsuarioEStatus(usuarioId, status);
-        return ResponseEntity.ok(trocas);
-    }
-
-    @GetMapping("/periodo")
-    public ResponseEntity<List<TrocaDTO>> buscarPorPeriodo(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
-        List<TrocaDTO> trocas = trocaService.buscarPorPeriodo(inicio, fim);
-        return ResponseEntity.ok(trocas);
-    }
-
-    @GetMapping("/avaliacao-minima/{avaliacaoMinima}")
-    public ResponseEntity<List<TrocaDTO>> buscarPorAvaliacaoMinima(@PathVariable Double avaliacaoMinima) {
-        List<TrocaDTO> trocas = trocaService.buscarPorAvaliacaoMinima(avaliacaoMinima);
-        return ResponseEntity.ok(trocas);
-    }
-
-    @PostMapping("/{id}/gerar-qr")
-    public ResponseEntity<TrocaDTO> gerarQRCode(@PathVariable Long id) {
-        TrocaDTO troca = trocaService.gerarQRCode(id);
-        return ResponseEntity.ok(troca);
-    }
-
-    // ✅ Validar QR Code e mudar status para CONCLUÍDA
-    @PostMapping("/validar-qrcode")
-    public ResponseEntity<TrocaDTO> validarQRCode(@RequestParam String qrCode) {
-        try {
-            System.out.println("========================================");
-            System.out.println("📱 Validando QR Code: " + qrCode);
-
-            // Buscar troca pelo QR Code
-            Troca troca = trocaRepository.findByQrCode(qrCode)
-                    .orElseThrow(() -> new BusinessException("QR Code inválido ou não encontrado"));
-
-            System.out.println("🔍 Troca encontrada: ID = " + troca.getId());
-            System.out.println("🔍 Status atual: " + troca.getStatus());
-
-            // Verificar se a troca está pendente
-            if (troca.getStatus() != Troca.StatusTroca.PENDENTE) {
-                throw new BusinessException("Esta troca não está mais pendente. Status: " + troca.getStatus());
-            }
-
-            // ✅ Mudar status para CONCLUÍDA
-            troca.setStatus(Troca.StatusTroca.CONCLUIDA);
-            troca.setDataConfirmacao(LocalDateTime.now());
-            troca = trocaRepository.save(troca);
-
-            System.out.println("✅ Troca concluída com sucesso!");
-            System.out.println("📅 Data de confirmação: " + troca.getDataConfirmacao());
-            System.out.println("========================================");
-
-            // Retornar DTO
-            TrocaDTO trocaDTO = new TrocaDTO();
-            trocaDTO.setId(troca.getId());
-            trocaDTO.setStatus(troca.getStatus());
-            trocaDTO.setQrCode(troca.getQrCode());
-            trocaDTO.setDataConfirmacao(troca.getDataConfirmacao());
-            trocaDTO.setCreatedAt(troca.getCreatedAt());
-
-            // Dados da proposta
-            if (troca.getProposta() != null) {
-                trocaDTO.setPropostaId(troca.getProposta().getId());
-                trocaDTO.setDataHora(troca.getProposta().getDataHoraSugerida());
-                trocaDTO.setLocal(troca.getProposta().getLocalSugerido());
-                trocaDTO.setObservacoes(troca.getProposta().getObservacoes());
-            }
-
-            return ResponseEntity.ok(trocaDTO);
-
-        } catch (Exception e) {
-            System.err.println("❌ Erro ao validar QR Code: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
+    // Endpoint para confirmar a troca com o código QR
     @PostMapping("/{id}/confirmar")
     public ResponseEntity<TrocaDTO> confirmarTroca(
             @PathVariable Long id,
@@ -207,8 +118,9 @@ public class TrocaController {
     }
 
     @GetMapping("/media-avaliacao")
-    public ResponseEntity<Double> obterMediaAvaliacao() {
-        Double media = trocaService.obterMediaAvaliacao();
+    public ResponseEntity<Double> obterMediaAvaliacaoGeral() {
+        Double media = trocaService.obterMediaAvaliacaoGeral();
         return ResponseEntity.ok(media);
     }
+
 }
