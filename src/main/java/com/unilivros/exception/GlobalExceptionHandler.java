@@ -103,13 +103,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllUncaughtException(Exception ex) {
+        logger.error("🛑 ERRO INTERNO (500): ", ex);
 
-        // 🚨 ESTA LINHA VAI FORÇAR O LOG COMPLETO
-        logger.error("🛑 ERRO INTERNO (500) NO PROCESSO DE VERIFICAÇÃO DE EMAIL: ", ex);
-
-        // Resposta genérica para o frontend.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Ocorreu um erro interno no servidor. Detalhes registrados no log.");
+                .body(new ApiResponseDTO(false, "Ocorreu um erro interno no servidor."));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
