@@ -1,11 +1,13 @@
 package com.unilivros.exception;
 
 import org.springframework.http.HttpStatus;
+import com.unilivros.dto.ApiResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -99,9 +101,6 @@ public class GlobalExceptionHandler {
         public void setErrors(Map<String, String> errors) { this.errors = errors; }
     }
 
-    /**
-     * Intercepta qualquer exceção não tratada e GARANTE o log da Stack Trace no console.
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllUncaughtException(Exception ex) {
 
@@ -111,5 +110,11 @@ public class GlobalExceptionHandler {
         // Resposta genérica para o frontend.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Ocorreu um erro interno no servidor. Detalhes registrados no log.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String error = "O parâmetro '" + ex.getName() + "' deve ser do tipo " + ex.getRequiredType().getSimpleName();
+        return ResponseEntity.badRequest().body(new ApiResponseDTO(false, error));
     }
 }
