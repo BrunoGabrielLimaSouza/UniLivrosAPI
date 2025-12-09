@@ -44,6 +44,7 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String senha;
 
+    @Column(columnDefinition = "TEXT")
     private String avatarUrl;
     private Double avaliacao = 5.0; // Média calculada
     private Integer xp = 0;

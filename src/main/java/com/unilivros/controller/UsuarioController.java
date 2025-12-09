@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -116,7 +117,7 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> atualizarUsuario(
             @PathVariable Long id,
-            @Valid @RequestBody UsuarioDTO usuarioDTO) {
+            @RequestBody UsuarioDTO usuarioDTO) {
         UsuarioDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioDTO);
         return ResponseEntity.ok(usuarioAtualizado);
     }
@@ -139,5 +140,14 @@ public class UsuarioController {
             @RequestParam Double novaAvaliacao) {
         usuarioService.atualizarAvaliacao(id, novaAvaliacao);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/{id}/avatar", consumes = "multipart/form-data")
+    public ResponseEntity<UsuarioDTO> uploadAvatar(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        UsuarioDTO usuarioAtualizado = usuarioService.uploadAvatar(id, file);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 }
