@@ -1,6 +1,7 @@
 package com.unilivros.controller;
 
 import com.unilivros.dto.NotificacaoDTO;
+import com.unilivros.dto.NotificacaoStatusDTO;
 import com.unilivros. model.Usuario;
 import com.unilivros.repository.UsuarioRepository;
 import com.unilivros.service.NotificacaoService;
@@ -57,7 +58,7 @@ public class NotificacaoController {
         return ResponseEntity.ok(notificacao);
     }
 
-    @PutMapping("/marcar-todas-lidas")
+    @PutMapping("/marcar-como-lidas")
     public ResponseEntity<Void> marcarTodasComoLidas() {
         Usuario usuario = getUsuarioAutenticado();
         notificacaoService.marcarTodasComoLidas(usuario.getId());
@@ -69,4 +70,11 @@ public class NotificacaoController {
         notificacaoService.deletarNotificacao(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/nao-lidas/status")
+    public ResponseEntity<NotificacaoStatusDTO> verificarStatusNaoLidas() {
+        NotificacaoStatusDTO status = notificacaoService.verificarStatusNaoLidas();
+        return ResponseEntity.ok(status);
+    }
+
 }

@@ -10,6 +10,9 @@ public class TrocaDTO {
 
     private Long id;
 
+    private String livro1Titulo;
+    private String livro2Titulo;
+
     @NotNull(message = "Status é obrigatório")
     private Troca.StatusTroca status;
 
@@ -40,6 +43,12 @@ public class TrocaDTO {
     // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getLivro1Titulo() { return livro1Titulo; }
+    public void setLivro1Titulo(String livro1Titulo) { this.livro1Titulo = livro1Titulo; }
+
+    public String getLivro2Titulo() { return livro2Titulo; }
+    public void setLivro2Titulo(String livro2Titulo) { this.livro2Titulo = livro2Titulo; }
 
     public Troca.StatusTroca getStatus() { return status; }
     public void setStatus(Troca.StatusTroca status) { this.status = status; }

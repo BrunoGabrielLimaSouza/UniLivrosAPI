@@ -1,12 +1,15 @@
 package com.unilivros.service;
 
 import com.unilivros.dto. NotificacaoDTO;
+import com.unilivros.dto.NotificacaoStatusDTO;
 import com.unilivros.exception.ResourceNotFoundException;
 import com. unilivros.model. Notificacao;
 import com. unilivros.model.Usuario;
 import com.unilivros.repository.NotificacaoRepository;
 import com.unilivros.repository.UsuarioRepository;
 import org.springframework. beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework. stereotype.Service;
 import org. springframework.transaction.annotation.Transactional;
 
@@ -94,5 +97,22 @@ public class NotificacaoService {
             throw new ResourceNotFoundException("Notificação", id);
         }
         notificacaoRepository.deleteById(id);
+    }
+
+    public NotificacaoStatusDTO verificarStatusNaoLidas() {
+        // 1. Obter o e-mail do usuário autenticado (padrão que você já usa)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailUsuario = authentication.getName();
+
+        // 2. Buscar o ID do usuário pelo e-mail
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado ou não autenticado."));
+
+        // 3. Contar notificações não lidas
+        long count = notificacaoRepository.countByUsuarioIdAndLidaFalse(usuario.getId());
+
+        // 4. Retornar o DTO
+        boolean hasUnread = count > 0;
+        return new NotificacaoStatusDTO(hasUnread);
     }
 }

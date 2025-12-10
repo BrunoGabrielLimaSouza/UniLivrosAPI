@@ -15,8 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,16 +48,22 @@ public class UsuarioService {
             throw new BusinessException("Email ou senha inválidos");
         }
 
-
         if (!usuario.isEnabled()) {
             throw new BusinessException("Usuário não confirmado. Verifique seu e-mail.");
         }
-
 
         return usuario;
     }
 
     public UsuarioDTO criarUsuario(UsuarioDTO usuarioDTO) {
+        // Validação manual de senha OBRIGATÓRIA na criação
+        if (usuarioDTO.getSenha() == null || usuarioDTO.getSenha().trim().isEmpty()) {
+            throw new BusinessException("A senha é obrigatória para o cadastro.");
+        }
+        if (usuarioDTO.getSenha().length() < 8) {
+            throw new BusinessException("A senha deve ter pelo menos 8 caracteres.");
+        }
+
         if (usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
             throw new BusinessException("Email já cadastrado");
         }
@@ -68,6 +77,46 @@ public class UsuarioService {
         usuario = usuarioRepository.save(usuario);
 
         return modelMapper.map(usuario, UsuarioDTO.class);
+    }
+
+    public UsuarioDTO atualizarUsuario(Long id, UsuarioDTO usuarioDTO) {
+        Usuario usuarioExistente = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
+
+        // Verifica se mudou o email e se já existe
+        if (!usuarioExistente.getEmail().equals(usuarioDTO.getEmail()) &&
+                usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
+            throw new BusinessException("Email já cadastrado");
+        }
+
+        // Verifica se mudou a matrícula e se já existe
+        if (usuarioDTO.getMatricula() != null &&
+                !usuarioExistente.getMatricula().equals(usuarioDTO.getMatricula()) &&
+                usuarioRepository.existsByMatricula(usuarioDTO.getMatricula())) {
+            throw new BusinessException("Matrícula já cadastrada");
+        }
+
+        // ⚠️ LÓGICA DE SENHA OPCIONAL
+        String senhaParaSalvar = usuarioExistente.getSenha(); // Por padrão, mantém a antiga
+
+        if (usuarioDTO.getSenha() != null && !usuarioDTO.getSenha().trim().isEmpty()) {
+            // Se o usuário enviou uma nova senha, valida e encripta
+            if (usuarioDTO.getSenha().length() < 8) {
+                throw new BusinessException("A nova senha deve ter pelo menos 8 caracteres.");
+            }
+            senhaParaSalvar = passwordEncoder.encode(usuarioDTO.getSenha());
+        }
+
+        // Mapeia os dados novos (Nome, Curso, etc) para a entidade existente
+        modelMapper.map(usuarioDTO, usuarioExistente);
+
+        // Reaplica a senha correta (Antiga ou Nova Encriptada)
+        // Isso impede que o ModelMapper sobrescreva com null
+        usuarioExistente.setSenha(senhaParaSalvar);
+
+        usuarioExistente = usuarioRepository.save(usuarioExistente);
+
+        return modelMapper.map(usuarioExistente, UsuarioDTO.class);
     }
 
     @Transactional(readOnly = true)
@@ -162,32 +211,6 @@ public class UsuarioService {
                 .collect(Collectors.toList());
     }
 
-    public UsuarioDTO atualizarUsuario(Long id, UsuarioDTO usuarioDTO) {
-        Usuario usuarioExistente = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
-
-        if (!usuarioExistente.getEmail().equals(usuarioDTO.getEmail()) &&
-                usuarioRepository.existsByEmail(usuarioDTO.getEmail())) {
-            throw new BusinessException("Email já cadastrado");
-        }
-
-        if (!usuarioExistente.getMatricula().equals(usuarioDTO.getMatricula()) &&
-                usuarioRepository.existsByMatricula(usuarioDTO.getMatricula())) {
-            throw new BusinessException("Matrícula já cadastrada");
-        }
-
-        if (usuarioDTO.getSenha() != null && !usuarioDTO.getSenha().isEmpty()) {
-            usuarioDTO.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
-        } else {
-            usuarioDTO.setSenha(usuarioExistente.getSenha());
-        }
-
-        modelMapper.map(usuarioDTO, usuarioExistente);
-        usuarioExistente = usuarioRepository.save(usuarioExistente);
-
-        return modelMapper.map(usuarioExistente, UsuarioDTO.class);
-    }
-
     public void deletarUsuario(Long id) {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("Usuário", id);
@@ -215,5 +238,34 @@ public class UsuarioService {
         }
 
         usuarioRepository.save(usuario);
+    }
+
+    public UsuarioDTO uploadAvatar(Long id, MultipartFile file) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
+
+        try {
+            // Valida se é uma imagem
+            if (!file.getContentType().startsWith("image/")) {
+                throw new BusinessException("O arquivo deve ser uma imagem.");
+            }
+
+            // Converte o arquivo para Base64
+            byte[] fileBytes = file.getBytes();
+            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+
+            // Monta a String pronta para o src do HTML (ex: data:image/png;base64,.....)
+            String avatarDataUrl = "data:" + file.getContentType() + ";base64," + base64Image;
+
+            usuario.setAvatarUrl(avatarDataUrl);
+
+            // Salva no banco
+            usuario = usuarioRepository.save(usuario);
+
+            return modelMapper.map(usuario, UsuarioDTO.class);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao processar imagem", e);
+        }
     }
 }

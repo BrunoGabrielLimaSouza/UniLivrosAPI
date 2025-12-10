@@ -71,8 +71,8 @@ public class Notificacao {
     public TipoNotificacao getTipo() { return tipo; }
     public void setTipo(TipoNotificacao tipo) { this.tipo = tipo; }
 
-    public Boolean getLida() { return lida; }
-    public void setLida(Boolean lida) { this.lida = lida; }
+    public boolean getLida() { return lida; }
+    public void setLida(boolean lida) { this.lida = lida; }
 
     public Long getPropostaId() { return propostaId; }
     public void setPropostaId(Long propostaId) { this.propostaId = propostaId; }

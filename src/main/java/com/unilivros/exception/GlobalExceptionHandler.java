@@ -1,15 +1,19 @@
 package com.unilivros.exception;
 
 import org.springframework.http.HttpStatus;
+import com.unilivros.dto.ApiResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.unilivros.controller.AuthController.logger;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -52,15 +56,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ErrorResponse error = new ErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Erro interno do servidor",
-            LocalDateTime.now()
-        );
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+//        ErrorResponse error = new ErrorResponse(
+//            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//            "Erro interno do servidor",
+//            LocalDateTime.now()
+//        );
+//        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
     
     // Classes internas para resposta de erro
     public static class ErrorResponse {
@@ -95,5 +99,19 @@ public class GlobalExceptionHandler {
         
         public Map<String, String> getErrors() { return errors; }
         public void setErrors(Map<String, String> errors) { this.errors = errors; }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleAllUncaughtException(Exception ex) {
+        logger.error("🛑 ERRO INTERNO (500): ", ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponseDTO(false, "Ocorreu um erro interno no servidor."));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String error = "O parâmetro '" + ex.getName() + "' deve ser do tipo " + ex.getRequiredType().getSimpleName();
+        return ResponseEntity.badRequest().body(new ApiResponseDTO(false, error));
     }
 }

@@ -57,6 +57,11 @@ public class Livro {
     @Size(max = 500, message = "Descrição deve ter no máximo 500 caracteres")
     @Column(length = 500)
     private String descricao;
+
+    // === NOVO CAMPO DA IA ===
+    @Column(name = "nivel_leitura")
+    private String nivelLeitura;
+    // ========================
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -116,6 +121,11 @@ public class Livro {
     
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    // === GETTER E SETTER DA IA ===
+    public String getNivelLeitura() { return nivelLeitura; }
+    public void setNivelLeitura(String nivelLeitura) { this.nivelLeitura = nivelLeitura; }
+    // =============================
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
